@@ -18,11 +18,11 @@
 using namespace cv;
 using namespace std;
 
-#define nFeatures       500    //图像金字塔上特征点的数量
+#define nFeatures       2000    //图像金字塔上特征点的数量
 #define nLevels         8       //图像金字塔层数
 #define myfScaleFactor    1.2     //金字塔比例因子
-#define myfIniThFAST      20      //检测fast角点阈值
-#define myfMinThFAST      8       //最低阈值
+#define myfIniThFAST      30      //检测fast角点阈值
+#define myfMinThFAST      15       //最低阈值
 
 imageStitching::imageStitching()
 {
@@ -75,6 +75,14 @@ void imageStitching::CalcCorners( Mat H,  Mat src)
 
 cv::Mat imageStitching::stitchingThreeImage(Mat img1, Mat img2, Mat img3)
 {
+
+    Mat dst(img2.rows*2,img2.cols*3, CV_8UC3);
+    cout << "dst size:" << dst.cols << "  " << dst.rows << endl;
+    dst.setTo(0);
+    Point2f offfset;
+    offfset.y = img2.rows/2;
+    offfset.x = img2.cols;
+    int cols,rows;
     //灰度图转换  
     Mat grayImage1, grayImage2, grayImage3;
     cvtColor(img1, grayImage1, CV_RGB2GRAY);
@@ -83,6 +91,17 @@ cv::Mat imageStitching::stitchingThreeImage(Mat img1, Mat img2, Mat img3)
 
     Mat imageDesc1, imageDesc2,imageDesc3;
     vector<KeyPoint> keyPoint1, keyPoint2,keyPoint3;
+
+    // //提取特征点    
+    // Ptr<FeatureDetector> Detector = ORB::create();
+    // //特征点描述，为下边的特征点匹配做准备    
+    // Ptr<DescriptorExtractor> Descriptor = ORB::create();
+    // Detector->detect(grayImage1, keyPoint1);
+    // Detector->detect(grayImage2, keyPoint2);
+    // Detector->detect(grayImage3, keyPoint3);
+    // Descriptor->compute(grayImage1, keyPoint1, imageDesc1);
+    // Descriptor->compute(grayImage2, keyPoint2, imageDesc2);
+    // Descriptor->compute(grayImage3, keyPoint3, imageDesc3);
 
     myORB::ORBextractor ORBextractor =  myORB::ORBextractor(nFeatures,myfScaleFactor,nLevels,myfIniThFAST,myfMinThFAST);
     ORBextractor(grayImage1, cv::Mat(), keyPoint1, imageDesc1);
@@ -104,101 +123,120 @@ cv::Mat imageStitching::stitchingThreeImage(Mat img1, Mat img2, Mat img3)
         if(matches_LM[i][0].distance < 0.6 * matches_LM[i][1].distance)
             good_matches_LM.push_back(matches_LM[i][0]);
     }
+    
     for (int i = 0; i < matches_MR.size(); i++)
     {
         // 比较欧氏距离差距    
-        if(matches_MR[i][0].distance < 0.6 * matches_MR[i][1].distance)
+        if(matches_MR[i][0].distance < 0.5 * matches_MR[i][1].distance)
             good_matches_MR.push_back(matches_MR[i][0]);
     }
+    // Mat img_goodmatch;
+    // cv::drawMatches(img2, keyPoint2, img3, keyPoint3, good_matches_MR, img_goodmatch);
+    // cv::imshow("img_goodmatch",img_goodmatch);
 
-    try{
-
-    Mat homo_LM,homo_MR;
-    Mat dst(img2.rows*2,img2.cols*3, CV_8UC3);
-    dst.setTo(0);
-    Mat  rightImageTransform;
-
-    Point2f offfset;
-    offfset.y = img2.rows/2;
-    offfset.x = img2.cols;
-    bool leftTransform_ok = false,rightTransform_ok = false;
-
-    // if(good_matches_LM.size()>=8)
-    // {
-    //     vector<Point2f> imagePoints1, imagePoints2;
-    //     for (int i = 0; i<good_matches_LM.size(); i++)
-    //     {
-    //         imagePoints1.push_back(keyPoint1[good_matches_LM[i].queryIdx].pt);  
-    //         imagePoints2.push_back(keyPoint2[good_matches_LM[i].trainIdx].pt + offfset);
-    //     }
-
-    //     //获取图像2到图像1的投影映射矩阵 尺寸为3*3  
-    //     homo_LM = findHomography(imagePoints1, imagePoints2, CV_RANSAC);
-    //     //计算配准图的四个顶点坐标
-    //     CalcCorners(homo_LM, img1);
-    //     //图像配准  
-    //     Mat  leftImageTransform;
-    //     warpPerspective(img1, leftImageTransform, homo_LM,Size(MAX(corners.right_top.x,corners.right_bottom.x),MAX(corners.left_bottom.y,corners.right_bottom.y)));
-    //     leftImageTransform.copyTo(dst(Rect(0, 0, leftImageTransform.cols, leftImageTransform.rows)));
-    //     img2.copyTo(dst(Rect(offfset.x, offfset.y, img2.cols, img2.rows)));
-    //     OptimizeSeamleft(img2, leftImageTransform, dst,offfset);
-        // leftTransform_ok = true;
-    // }
-    // else//匹配点不足８个
-    // {
-    //     cout << " Insufficient feature points, unable to realize left image stitching " << endl;
-    // }
-
-    if(good_matches_MR.size()>=8)
+    try
     {
-        vector<Point2f> imagePoints1, imagePoints2;
-        for (int i = 0; i<good_matches_MR.size(); i++)
+        Mat homo_LM,homo_MR;
+        Mat  rightImageTransform;
+        bool leftTransform_ok = false,rightTransform_ok = false;
+
+        if(good_matches_MR.size()>=8)
         {
-            imagePoints1.push_back(keyPoint2[good_matches_MR[i].queryIdx].pt + offfset);  
-            imagePoints2.push_back(keyPoint3[good_matches_MR[i].trainIdx].pt);
+            vector<Point2f> imagePoints1, imagePoints2;
+            for (int i = 0; i<good_matches_MR.size(); i++)
+            {
+                imagePoints1.push_back(keyPoint2[good_matches_MR[i].queryIdx].pt + offfset);  
+                imagePoints2.push_back(keyPoint3[good_matches_MR[i].trainIdx].pt);
+            }
+
+            //获取图像2到图像1的投影映射矩阵 尺寸为3*3  
+            homo_MR = findHomography(imagePoints2, imagePoints1, CV_RANSAC);
+            //计算配准图的四个顶点坐标
+            CalcCorners(homo_MR, img3);
+            //图像配准  
+            cout << "1111111"<<endl;
+            warpPerspective(img3, rightImageTransform, homo_MR, Size(MAX(corners.right_top.x,corners.right_bottom.x),MAX(corners.left_bottom.y,corners.right_bottom.y)));
+            cout << "123****"<<endl;
+
+            if(rightImageTransform.cols>=dst.cols) cols = dst.cols;
+            else cols = rightImageTransform.cols;
+            if(rightImageTransform.rows>=dst.rows) rows = dst.rows;
+            else rows = rightImageTransform.rows;
+            Point2i start;
+            start.x = MAX(0, MIN(corners.left_top.x, corners.left_bottom.x));
+            start.y = MAX(0, MIN(corners.left_top.y, corners.right_top.y));
+            cv::Rect rect(start.x, start.y, cols-start.x, rows-start.y);
+            cv::Mat rect_rightImageTransform = rightImageTransform(rect);
+            rect_rightImageTransform.copyTo(dst(rect));       
+            rightTransform_ok = true;
+            cout << "2222222"<<endl;
+        }
+        else//匹配点不足８个
+        {
+            cout << " Insufficient feature points, unable to realize right image stitching " << endl;
         }
 
-        //获取图像2到图像1的投影映射矩阵 尺寸为3*3  
-        homo_MR = findHomography(imagePoints2, imagePoints1, CV_RANSAC);
-        //计算配准图的四个顶点坐标
-        CalcCorners(homo_MR, img3);
-        //图像配准  
-        
-        warpPerspective(img3, rightImageTransform, homo_MR, Size(MAX(corners.right_top.x,corners.right_bottom.x),MAX(corners.left_bottom.y,corners.right_bottom.y)));
-        rightImageTransform.copyTo(dst(Rect(0, 0, rightImageTransform.cols, rightImageTransform.rows)));       
-        rightTransform_ok = true;
-    }
-    else//匹配点不足８个
-    {
-        cout << " Insufficient feature points, unable to realize right image stitching " << endl;
-    }
+        if(good_matches_LM.size()>=8)
+        {
+            vector<Point2f> imagePoints1, imagePoints2;
+            for (int i = 0; i<good_matches_LM.size(); i++)
+            {
+                imagePoints1.push_back(keyPoint1[good_matches_LM[i].queryIdx].pt);  
+                imagePoints2.push_back(keyPoint2[good_matches_LM[i].trainIdx].pt + offfset);
+            }
 
-    img2.copyTo(dst(Rect(offfset.x, offfset.y, img2.cols, img2.rows)));
-    cout << "1111111"<<endl;
-    if(leftTransform_ok == true)
-    {
-        leftTransform_ok = false;
-        // OptimizeSeamleft(img2, leftImageTransform, dst,offfset);
-    }    
-    if(rightTransform_ok == true)
-    {
-        rightTransform_ok = false;
-        cout << "222222"<<endl;
-        OptimizeSeamRight(img2, rightImageTransform, dst,offfset);
-        cout << "333333"<<endl;
-    }    
+            //获取图像2到图像1的投影映射矩阵 尺寸为3*3  
+            homo_LM = findHomography(imagePoints1, imagePoints2, CV_RANSAC);
+            //计算配准图的四个顶点坐标
+            CalcCorners(homo_LM, img1);
+            //图像配准  
+            Mat  leftImageTransform;
+            cout << "3333333"<<endl;
+            warpPerspective(img1, leftImageTransform, homo_LM,Size(MAX(corners.right_top.x,corners.right_bottom.x),MAX(corners.left_bottom.y,corners.right_bottom.y)));
+            
+            if(leftImageTransform.cols>dst.cols) cols = dst.cols-1;
+            else cols = leftImageTransform.cols;
+            if(leftImageTransform.rows>dst.rows) rows = dst.rows-1;
+            else rows = leftImageTransform.rows;          
+            Point2i start;
+            start.x = MAX(0, MIN(corners.left_top.x, corners.left_bottom.x));
+            start.y = MAX(0, MIN(corners.left_top.y, corners.right_top.y));
+            cv::Rect rect(start.x, start.y, cols-start.x, rows-start.y);
+            cv::Mat rect_leftImageTransform = leftImageTransform(rect);              
+            rect_leftImageTransform.copyTo(dst(rect));
+            img2.copyTo(dst(Rect(offfset.x, offfset.y, img2.cols, img2.rows)));
+            // OptimizeSeamleft(img2, leftImageTransform, dst,offfset);
+            leftTransform_ok = true;
+            cout << "44444444"<<endl;
+        }
+        else//匹配点不足８个
+        {
+            cout << " Insufficient feature points, unable to realize left image stitching " << endl;
+        }
 
-    return dst;
-
+        img2.copyTo(dst(Rect(offfset.x, offfset.y, img2.cols, img2.rows)));
+        cout << "555555"<<endl;
+        if(leftTransform_ok == true)
+        {
+            leftTransform_ok = false;
+            // OptimizeSeamleft(img2, leftImageTransform, dst,offfset);
+        }    
+        if(rightTransform_ok == true)
+        {
+            rightTransform_ok = false;
+            cout << "6666666"<<endl;
+            // OptimizeSeamRight(img2, rightImageTransform, dst, offfset);
+            cout << "7777777"<<endl;
+        }    
+        return dst;
     }
     catch(...){
         cout << "error!!!!" << endl;
-        return img1;
+        img2.copyTo(dst(Rect(offfset.x, offfset.y, img2.cols, img2.rows)));
+        return dst;
     }
 
 }
-
-
 
 //优化两图的连接处，使得拼接自然
 void imageStitching::OptimizeSeamRight(Mat& leftImage, Mat& trans, Mat& dst, Point2f offfset)

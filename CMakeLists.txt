@@ -140,7 +140,7 @@ include
 add_executable(uav1_node src/uav1.cpp src/uav_control.cpp)
 add_executable(uav2_node src/uav2.cpp src/uav_control.cpp)
 add_executable(subscribImage
-  src/myORBextractor.cpp src/sub_Image.cpp src/imageStitching.cpp)
+  src/myORBextractor.cpp src/sub_Image_copy.cpp src/imageStitching.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
