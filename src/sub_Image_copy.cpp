@@ -62,17 +62,17 @@ int main(int argc, char *argv[])
         if(cap1.isOpened())
         {
             cap1 >> img1;  
-            resize(img1,img1Sacle,Size(img1.cols/2,img1.rows/2),0,0);
+            resize(img1,img1Sacle,Size(img1.cols/4,img1.rows/4),0,0);
         }    
         if(cap2.isOpened())
         {
             cap2 >> img2;
-            resize(img2,img2Sacle,Size(img2.cols/2,img2.rows/2),0,0);
+            resize(img2,img2Sacle,Size(img2.cols/4,img2.rows/4),0,0);
         }  
         if(cap3.isOpened())
         {
             cap3 >> img3;
-            resize(img3,img3Sacle,Size(img3.cols/2,img3.rows/2),0,0);
+            resize(img3,img3Sacle,Size(img3.cols/4,img3.rows/4),0,0);
         }       
         cv::imshow("imgleft",img1Sacle);
         cv::waitKey(1);

@@ -23,11 +23,7 @@ public:
 
     //优化两图的连接处，使得拼接自然
     void OptimizeSeam(Mat& sourceImage, Mat& transImage, Mat& dst,four_corners_t source_corners,four_corners_t trans_corners);
-    void OptimizeSeamRight(Mat& leftImage, Mat& trans, Mat& dst,Point2f offfset);
-    void OptimizeSeamleft(Mat& rightImage, Mat& trans, Mat& dst,Point2f offfset);
     void CalcCorners( Mat H,  Mat src, four_corners_t &corners);
-    cv::Mat imageProcess(Mat img1, Mat img2);
-    cv::Mat imageProcessLeft(Mat img1, Mat img2);
     cv::Mat stitchingThreeImage(Mat img1, Mat img2, Mat img3);
     void drawText(Mat & image, float rate, Point centerpoint);
 
