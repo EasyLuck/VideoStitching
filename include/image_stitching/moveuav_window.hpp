@@ -28,8 +28,9 @@ Q_SIGNALS:
   void flayUpSignal(int,bool);
   void flayDownSignal(int,bool);
   void turnLeftSignal(int,bool);
-  void turnRightSignal(int,bool);
+  void cameraControSignal(int,double,double);
 
+  void turnRightSignal(int,bool);
 public Q_SLOTS:
   void on_forward_pBtn_pressed();
 
@@ -62,6 +63,8 @@ public Q_SLOTS:
   void on_turnRight_pBtn_pressed();
 
   void on_turnRight_pBtn_released();
+
+  void on_cameraControl_pBtn_clicked();
 
 private:
   Ui::moveUav *ui;

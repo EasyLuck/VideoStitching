@@ -54,15 +54,15 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
 
-//  QObject::connect(&uav1Node, SIGNAL(rosShutdown()), this, SLOT(close()));
+  QObject::connect(&uav1Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav1Node,SIGNAL(showUav1ImageSignal(QImage)),this,SLOT(deal_showUav1ImageSignal(QImage)));
   QObject::connect(&uav1Node,SIGNAL(showUav1BatteryData(int,bool)),this,SLOT(deal_showUav1BatteryData(int,bool)));
 
-//  QObject::connect(&uav2Node, SIGNAL(rosShutdown()), this, SLOT(close()));
+  QObject::connect(&uav2Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav2Node,SIGNAL(showUav2ImageSignal(QImage)),this,SLOT(deal_showUav2ImageSignal(QImage)));
   QObject::connect(&uav2Node,SIGNAL(showUav2BatteryData(int,bool)),this,SLOT(deal_showUav2BatteryData(int,bool)));
 
-//  QObject::connect(&uav3Node, SIGNAL(rosShutdown()), this, SLOT(close()));
+  QObject::connect(&uav3Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav3Node,SIGNAL(showUav3ImageSignal(QImage)),this,SLOT(deal_showUav3ImageSignal(QImage)));
   QObject::connect(&uav3Node,SIGNAL(showUav3BatteryData(int,bool)),this,SLOT(deal_showUav3BatteryData(int,bool)));
 
@@ -83,6 +83,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(moveUav1,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(moveUav1,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(moveUav1,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(moveUav1,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //uav2 飞行控制
   QObject::connect(moveUav2,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
@@ -93,6 +94,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(moveUav2,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(moveUav2,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(moveUav2,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(moveUav2,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //uav3 飞行控制
   QObject::connect(moveUav3,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
@@ -103,6 +105,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(moveUav3,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(moveUav3,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(moveUav3,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(moveUav3,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //自主飞行控制
   QObject::connect(uavControl,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
@@ -119,21 +122,18 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ui.uav1Land_pBtn->setEnabled(false);
     ui.uav1Takeoff_pBtn->setEnabled(false);
     ui.uav1Move_pBtn->setEnabled(false);
-    ui.uav1ShowImage_pBtn->setEnabled(false);
     ui.uav1Battery_pBar->setEnabled(false);
 
     uav2Name = "bebop4";//默认值
     ui.uav2Land_pBtn->setEnabled(false);
     ui.uav2Takeoff_pBtn->setEnabled(false);
     ui.uav2Move_pBtn->setEnabled(false);
-    ui.uav2ShowImage_pBtn->setEnabled(false);
     ui.uav2Battery_pBar->setEnabled(false);
 
     uav3Name = "bebop5";//默认值
     ui.uav3Land_pBtn->setEnabled(false);
     ui.uav3Takeoff_pBtn->setEnabled(false);
     ui.uav3Move_pBtn->setEnabled(false);
-    ui.uav3ShowImage_pBtn->setEnabled(false);
     ui.uav3Battery_pBar->setEnabled(false);
 
     imageStitching->start();
@@ -211,7 +211,47 @@ void MainWindow::displayStitchingImage(const QImage image)
   ui.overlapRate_right_lineEdit->setText(overlap) ;
 }
 
-/*****************************  无人机1 *****************************/
+void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horizontal)
+{
+  if(UAVx == 1)
+    uav1Node.cameraControl(vertical,horizontal);
+  else if(UAVx == 2)
+    uav2Node.cameraControl(vertical,horizontal);
+  else if(UAVx == 3)
+    uav3Node.cameraControl(vertical,horizontal);
+}
+
+void  MainWindow::deal_rosShutdown(int UAVx)
+{
+  if(UAVx == 1)
+  {
+    uav1Node.quit();
+    uav1Node.wait();
+    ui.uav1Land_pBtn->setEnabled(false);
+    ui.uav1Takeoff_pBtn->setEnabled(false);
+    ui.uav1Move_pBtn->setEnabled(false);
+    ui.uav1Battery_pBar->setEnabled(false);
+  }
+  else if(UAVx == 2)
+  {
+    uav2Node.quit();
+    uav2Node.wait();
+    ui.uav2Land_pBtn->setEnabled(false);
+    ui.uav2Takeoff_pBtn->setEnabled(false);
+    ui.uav2Move_pBtn->setEnabled(false);
+    ui.uav2Battery_pBar->setEnabled(false);
+  }
+  else if(UAVx == 3)
+  {
+    uav3Node.quit();
+    uav3Node.wait();
+    ui.uav3Land_pBtn->setEnabled(false);
+    ui.uav3Takeoff_pBtn->setEnabled(false);
+    ui.uav3Move_pBtn->setEnabled(false);
+    ui.uav3Battery_pBar->setEnabled(false);
+  }
+}
+/* ******************************************************  无人机1 ******************************************************* */
 
 void MainWindow::displayUav1Image(const QImage image)
 {
@@ -225,9 +265,9 @@ void MainWindow::displayUav1Image(const QImage image)
 
 void MainWindow::deal_showUav1ImageSignal(QImage image)
 {
-  static int i=0;
-  qDebug() << "deal_showUav1ImageSignal"<<i;
-  i++;
+//  static int i=0;
+//  qDebug() << "deal_showUav1ImageSignal"<<i;
+//  i++;
   displayUav1Image(image);
 }
 void MainWindow::deal_showUav1BatteryData(int batteryData, bool batteryState)
@@ -264,10 +304,6 @@ void MainWindow::on_uav1Connect_pBtn_clicked()
   system(command);
 #endif
 
-  ui.uav1Takeoff_pBtn->setEnabled(true);
-  ui.uav1Land_pBtn->setEnabled(true);
-  ui.uav1Move_pBtn->setEnabled(true);
-  ui.uav1ShowImage_pBtn->setEnabled(true);
 }
 
 void MainWindow::on_uav1Move_pBtn_clicked()
@@ -287,6 +323,10 @@ void MainWindow::on_uav1ShowImage_pBtn_clicked()
     }
     else
     {
+      ui.uav1Land_pBtn->setEnabled(true);
+      ui.uav1Takeoff_pBtn->setEnabled(true);
+      ui.uav1Move_pBtn->setEnabled(true);
+      ui.uav1Battery_pBar->setEnabled(true);
       ui.uav1ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
@@ -298,7 +338,7 @@ void MainWindow::on_uav1ShowImage_pBtn_clicked()
 
 }
 
-/*****************************  无人机2 *****************************/
+/* *******************************************************  无人机2 ******************************************************* */
 
 void MainWindow::deal_showUav2ImageSignal(QImage image)
 {
@@ -348,11 +388,6 @@ void MainWindow::on_uav2Connect_pBtn_clicked()
   const char *command = str.c_str();
   system(command);
 #endif
-
-  ui.uav2Takeoff_pBtn->setEnabled(true);
-  ui.uav2Land_pBtn->setEnabled(true);
-  ui.uav2Move_pBtn->setEnabled(true);
-  ui.uav2ShowImage_pBtn->setEnabled(true);
 }
 
 void MainWindow::on_uav2Move_pBtn_clicked()
@@ -373,6 +408,10 @@ void MainWindow::on_uav2ShowImage_pBtn_clicked()
     }
     else
     {
+      ui.uav2Land_pBtn->setEnabled(true);
+      ui.uav2Takeoff_pBtn->setEnabled(true);
+      ui.uav2Move_pBtn->setEnabled(true);
+      ui.uav2Battery_pBar->setEnabled(true);
       ui.uav2ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
@@ -382,23 +421,13 @@ void MainWindow::on_uav2ShowImage_pBtn_clicked()
     ui.uav2ShowImage_pBtn->setText(QString::fromUtf8("启动"));
   }
 
-//  if ( !uav2Node.init(uav2Name) )
-//  {
-//    showNoMasterMessage();
-//  }
-//  else
-//  {
-//    ui.uav2ShowImage_pBtn->setEnabled(false);
-//  }
 }
 
-/*****************************  无人机3 *****************************/
+/* *******************************************************  无人机3 ******************************************************* */
 
 void MainWindow::deal_showUav3ImageSignal(QImage image)
 {
-//  static int i=0;
-//  qDebug() << "deal_showUav1ImageSignal"<<i;
-//  i++;
+
   displayUav3Image(image);
 }
 void MainWindow::displayUav3Image(const QImage image)
@@ -443,11 +472,6 @@ void MainWindow::on_uav3Connect_pBtn_clicked()
   const char *command = str.c_str();
   system(command);
 #endif
-
-  ui.uav3Takeoff_pBtn->setEnabled(true);
-  ui.uav3Land_pBtn->setEnabled(true);
-  ui.uav3Move_pBtn->setEnabled(true);
-  ui.uav3ShowImage_pBtn->setEnabled(true);
 }
 
 void MainWindow::on_uav3Move_pBtn_clicked()
@@ -467,6 +491,10 @@ void MainWindow::on_uav3ShowImage_pBtn_clicked()
     }
     else
     {
+      ui.uav3Land_pBtn->setEnabled(true);
+      ui.uav3Takeoff_pBtn->setEnabled(true);
+      ui.uav3Move_pBtn->setEnabled(true);
+      ui.uav3Battery_pBar->setEnabled(true);
       ui.uav3ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
@@ -475,18 +503,9 @@ void MainWindow::on_uav3ShowImage_pBtn_clicked()
     uav3Node.isRunning = false;
     ui.uav3ShowImage_pBtn->setText(QString::fromUtf8("启动"));
   }
-
-//  if ( !uav3Node.init(uav3Name) )
-//  {
-//    showNoMasterMessage();
-//  }
-//  else
-//  {
-//    ui.uav3ShowImage_pBtn->setEnabled(false);
-//  }
 }
 
-/*****************************  控制无人机的移动 *****************************/
+/* *******************************************************  控制无人机的移动 ******************************************************* */
 void MainWindow::deal_forwardSignal(int UAVx, bool state)
 {
   if(UAVx == 1)

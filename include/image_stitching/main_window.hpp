@@ -87,7 +87,19 @@ public Q_SLOTS:
   void deal_showUav2BatteryData(int batteryData, bool batteryState);
   void deal_showUav3BatteryData(int batteryData, bool batteryState);
 
+  void deal_forwardSignal(int UAVx, bool state);
+  void deal_backwardSignal(int UAVx, bool state);
+  void deal_flayLeftSignal(int UAVx, bool state);
+  void deal_flayRightSignal(int UAVx, bool state);
+  void deal_flayUpSignal(int UAVx, bool state);
+  void deal_flayDownSignal(int UAVx, bool state);
+  void deal_turnLeftSignal(int UAVx, bool state);
+  void deal_turnRightSignal(int UAVx, bool state);
+
   void deal_showStitchingImageSignal(QImage image);
+  void deal_cameraControSignal(int UAVx, double vertical, double horizontal);
+
+  void  deal_rosShutdown(int UAVx);
 
   void on_uav1Takeoff_pBtn_clicked();
   void on_uav1Land_pBtn_clicked();
@@ -111,14 +123,7 @@ public Q_SLOTS:
 
   void on_autoFly_pBtn_clicked();
 
-  void deal_forwardSignal(int UAVx, bool state);
-  void deal_backwardSignal(int UAVx, bool state);
-  void deal_flayLeftSignal(int UAVx, bool state);
-  void deal_flayRightSignal(int UAVx, bool state);
-  void deal_flayUpSignal(int UAVx, bool state);
-  void deal_flayDownSignal(int UAVx, bool state);
-  void deal_turnLeftSignal(int UAVx, bool state);
-  void deal_turnRightSignal(int UAVx, bool state);
+
 
 
 

@@ -238,7 +238,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <item>
        <property name="text">
@@ -263,6 +263,11 @@
       <item>
        <property name="text">
         <string>bebop5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop</string>
        </property>
       </item>
      </widget>
@@ -440,7 +445,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <item>
        <property name="text">
@@ -465,6 +470,11 @@
       <item>
        <property name="text">
         <string>bebop5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop</string>
        </property>
       </item>
      </widget>
@@ -779,7 +789,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>0</number>
       </property>
       <item>
        <property name="text">
@@ -804,6 +814,11 @@
       <item>
        <property name="text">
         <string>bebop5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop</string>
        </property>
       </item>
      </widget>

@@ -16,7 +16,7 @@ class uav1 : public QThread, public uav
 {
     Q_OBJECT
 public:
-  uav1(int argc, char** argv );
+  uav1(int argc, char** argv);
   virtual ~uav1();
 
   void run();
@@ -31,7 +31,7 @@ Q_SIGNALS://Qt信号
   void showUav1ImageSignal(QImage);   // 发送QImage
   void uav1RgbimageSignal(cv::Mat);   // 发送Opencv转换Rgbimage
   void showUav1BatteryData(int,bool);  // 发送电池电量信息
-  void rosShutdown();
+  void rosShutdown(int);
 
 private:
   int init_argc;

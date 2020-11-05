@@ -46,6 +46,7 @@ bool uav1::init(std::string uavname)
   takeoff_pub= nh.advertise<std_msgs::Empty>(uavname + "/takeoff", 1);         // 发布 起飞命令
   land_pub   = nh.advertise<std_msgs::Empty>(uavname + "/land", 1);            // 发布 降落命令
   cmd_pub    = nh.advertise<geometry_msgs::Twist>(uavname + "/cmd_vel", 1);    // 发布 移动命令
+  cameraControl_pub = nh.advertise<geometry_msgs::Twist>(uavname + "/camera_control", 1);    // 发布相机控制命令
   batteryData_sub= nh.subscribe(uavname + "/states/common/CommonState/BatteryStateChanged",2,&uav1::receiveBatteryData_cb,this);    // 发布 移动命令
   receiveImage_sub = it.subscribe(uavname + "/image_raw",5,&uav1::receiveImage_cb,this);// 订阅 图像信息
 
@@ -60,31 +61,13 @@ bool uav1::init(std::string uavname)
 void uav1::run()
 {
   ros::Rate loop_rate(20);
-  int count = 0;
+
+  cameraControl(20, 0);
 
   while ( ros::ok() )
   {
-//    if (receiveImageFlag == true)
-//    {
-//        receiveImageFlag = false;
-//        std::cout << "emit signals!!" << std::endl;
-//    }
-    if(forward == true)   //前进
-      cmd(0.15, 0, 0, 0);
-    if(backward == true)  //后退
-      cmd(-0.15, 0, 0, 0);
-    if(flayLeft == true)  //左飞
-      cmd(0, 0.15, 0, 0);
-    if(flayRight == true) //右飞
-      cmd(0, -0.15, 0, 0);
-    if(flayUp == true)    //上升
-      cmd(0, 0, 0.1, 0);
-    if(flayDown == true)  //下降
-      cmd(0, 0, -0.1, 0);
-    if(turnLeft == true)  //左转
-      cmd(0, 0, 0, 0.1);
-    if(turnRight == true) //右转
-      cmd(0, 0, 0, -0.1);
+
+    moveControl();
 
     if(isRunning == false) break;
 
@@ -92,7 +75,7 @@ void uav1::run()
     loop_rate.sleep();
   }
   std::cout << "uav1 Ros shutdown, proceeding to close the gui." << std::endl;
-  Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
+  Q_EMIT rosShutdown(1); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
 

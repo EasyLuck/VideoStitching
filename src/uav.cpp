@@ -30,7 +30,7 @@ void uav::land()
     cout << "bebop  land! " << endl;
 //    ROS_INFO("bebop  land! ");
 }
-void uav::cmd(float x,float y,float z,float yaw)
+void uav::cmd(double x,double y,double z,double yaw)
 {
     cmd_vel.linear.x = x;
     cmd_vel.linear.y = y;
@@ -41,3 +41,32 @@ void uav::cmd(float x,float y,float z,float yaw)
 //    ROS_INFO("bebop  send cmd! ");
 }
 
+void uav::cameraControl(double vertical, double horizontal)
+{
+  cameraControl_vel.angular.y = vertical;
+  cameraControl_vel.angular.z = horizontal;
+  cameraControl_pub.publish(cameraControl_vel);
+}
+
+void uav::moveControl()
+{
+  if(forward == true)   //前进
+    cmd(0.15, 0, 0, 0);
+  if(backward == true)  //后退
+    cmd(-0.15, 0, 0, 0);
+  if(flayLeft == true)  //左飞
+    cmd(0, 0.15, 0, 0);
+  if(flayRight == true) //右飞
+    cmd(0, -0.15, 0, 0);
+  if(flayUp == true)    //上升
+    cmd(0, 0, 0.15, 0);
+  if(flayDown == true)  //下降
+    cmd(0, 0, -0.15, 0);
+  if(turnLeft == true)  //左转
+    cmd(0, 0, 0, 0.1);
+  if(turnRight == true) //右转
+    cmd(0, 0, 0, -0.1);
+
+  if(!forward && !backward && !flayLeft && !flayRight && !flayUp && !flayDown && !turnLeft && !turnRight )
+    cmd(0, 0, 0, 0);
+}

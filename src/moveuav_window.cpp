@@ -102,3 +102,11 @@ void moveUav::on_turnRight_pBtn_released()
 {
   Q_EMIT turnRightSignal(UAVxControl,false);
 }
+
+void moveUav::on_cameraControl_pBtn_clicked()
+{
+  double vertical, horizontal;
+  vertical = ui->Vertical_lineEdit->text().toDouble() ;
+  horizontal = ui->Horizontal_lineEdit->text().toDouble();
+  Q_EMIT cameraControSignal(UAVxControl,vertical,horizontal);
+}

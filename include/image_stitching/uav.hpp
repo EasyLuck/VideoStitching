@@ -29,6 +29,7 @@ public:
   ros::Publisher takeoff_pub;
   ros::Publisher land_pub;
   ros::Publisher cmd_pub;
+  ros::Publisher cameraControl_pub;
   // 订阅
   ros::Subscriber state_sub;
   ros::Subscriber batteryData_sub;
@@ -51,6 +52,7 @@ public:
 //  bool isRunning; //节点是否正在运行
 
   geometry_msgs::Twist cmd_vel;
+  geometry_msgs::Twist cameraControl_vel;
 
   int batteryData;  // 电池电量
 
@@ -58,8 +60,12 @@ public:
 
   void takeoff();
   void land();
-  void cmd(float x,float y,float z,float yaw);
+  void cmd(double x,double y,double z,double yaw);
   void state_cb(const nav_msgs::Odometry::ConstPtr& msg);
+  void cameraControl(double vertical, double horizontal);
+
+  void moveControl();
+public Q_SLOTS:
 
 //Q_SIGNALS://Qt信号
 //  void showUavBatteryData(int,bool);  // 发送电池电量信息

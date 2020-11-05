@@ -33,7 +33,7 @@ Q_SIGNALS://Qt信号
   void showUav2ImageSignal(QImage);
   void uav2RgbimageSignal(cv::Mat);
   void showUav2BatteryData(int,bool);  // 发送电池电量信息
-  void rosShutdown();
+  void rosShutdown(int);
 
 private:
   int init_argc;
