@@ -73,7 +73,7 @@ void stitching::run()
       if(ouputFile.is_open())
         ouputFile.close();
 
-      std::cout << "thread is running, isStitching = false " << std::endl;
+//      std::cout << "thread is running, isStitching = false " << std::endl;
       msleep(500);
     }
   }

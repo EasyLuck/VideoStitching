@@ -9,7 +9,7 @@
 *****************************************************************************/
 
 namespace image_stitching {
-
+using namespace std;
 /*****************************************************************************
 ** Implementation
 *****************************************************************************/
@@ -18,7 +18,7 @@ uav2::uav2(int argc, char** argv ) :
   init_argc(argc),
   init_argv(argv)
   {
-  isRunning = false;
+  isRun = false;
 }
 
 uav2::~uav2() {
@@ -47,7 +47,8 @@ bool uav2::init(std::string uavname)
   cameraControl_pub = nh.advertise<geometry_msgs::Twist>(uavname + "/camera_control", 1);    // 发布相机控制命令
   batteryData_sub= nh.subscribe(uavname + "/states/common/CommonState/BatteryStateChanged",2,&uav2::receiveBatteryData_cb,this);    // 发布 移动命令
   receiveImage_sub = it.subscribe(uavname + "/image_raw",5,&uav2::receiveImage_cb,this);// 订阅 图像信息
-
+//  gpsData_sub = nh.subscribe<sensor_msgs::NavSatFix>(uavname + "/fix",1,&uav2::gpsData_cb, this);
+  odomData_sub = nh.subscribe<nav_msgs::Odometry>(uavname + "/odom",1,&uav2::odomData_cb, this);
   //用于在gazebo仿真中测试
 //  receiveImage_sub = it.subscribe("iris_2/camera_Monocular/image_raw",5,&uav2::receiveImage_cb,this);
 
@@ -66,7 +67,7 @@ void uav2::run()
   {
     moveControl();
 
-    if(isRunning == false) break;
+    if(isRun == false) break;
 
     ros::spinOnce();
     loop_rate.sleep();
@@ -95,8 +96,26 @@ void uav2::receiveImage_cb(const sensor_msgs::ImageConstPtr& msg)
 void uav2::receiveBatteryData_cb(const CommonCommonStateBatteryStateChanged::ConstPtr& msg)
 {
   batteryData = msg->percent;
-  Q_EMIT showUav2BatteryData(batteryData,true);
+  Q_EMIT batteryDataSignal(batteryData,true);
 }
 
+void uav2::gpsData_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
+{
+  cout << "uav2 gpsData_cb" << endl;
+  if(msg->status.status == 0)
+    Q_EMIT gpsDataSignal(2,msg->latitude, msg->longitude);
+  else
+  {
+    Q_EMIT gpsDataSignal(2,0.0, 0.0);
+    cout << "uav2 no GPS!" << endl;
+  }
+}
+void uav2::odomData_cb(const nav_msgs::Odometry::ConstPtr& msg)
+{
+//  cout << "uav2 odomData_cb" << endl;
+
+  cuurrentPose = msg->pose.pose;
+  Q_EMIT odomDataSignal(2,cuurrentPose);
+}
 
 }  // namespace image_stitching

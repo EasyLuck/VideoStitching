@@ -83,9 +83,14 @@ public Q_SLOTS:
   void deal_showUav2ImageSignal(QImage image);
   void deal_showUav3ImageSignal(QImage image);
   // 接受电池电量信息槽函数
-  void deal_showUav1BatteryData(int batteryData, bool batteryState);
-  void deal_showUav2BatteryData(int batteryData, bool batteryState);
-  void deal_showUav3BatteryData(int batteryData, bool batteryState);
+  void deal_uav1batteryDataSignal(int batteryData, bool batteryState);
+  void deal_uav2batteryDataSignal(int batteryData, bool batteryState);
+  void deal_uav3batteryDataSignal(int batteryData, bool batteryState);
+
+//  void deal_uav3gpsDataSignal(double latitude, double longitude);
+//  void deal_uav3gpsDataSignal(double latitude, double longitude);
+//  void deal_uav2gpsDataSignal(double latitude, double longitude);
+//  void deal_uav3gpsDataSignal(double latitude, double longitude);
 
   void deal_forwardSignal(int UAVx, bool state);
   void deal_backwardSignal(int UAVx, bool state);
@@ -95,6 +100,8 @@ public Q_SLOTS:
   void deal_flayDownSignal(int UAVx, bool state);
   void deal_turnLeftSignal(int UAVx, bool state);
   void deal_turnRightSignal(int UAVx, bool state);
+
+  void deal_uav_FBcontrolSignal(double controlUav1, double controlUav3, double yawUav1, double yawUav3);
 
   void deal_showStitchingImageSignal(QImage image);
   void deal_cameraControSignal(int UAVx, double vertical, double horizontal);
@@ -123,7 +130,7 @@ public Q_SLOTS:
 
   void on_autoFly_pBtn_clicked();
 
-
+  void on_setYawErr_pBtn_clicked();
 
 
 

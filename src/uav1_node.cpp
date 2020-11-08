@@ -12,6 +12,7 @@
 
 namespace image_stitching {
 
+using namespace std;
 /*****************************************************************************
 ** Implementation
 *****************************************************************************/
@@ -20,7 +21,7 @@ uav1::uav1(int argc, char** argv ) :
   init_argc(argc),
   init_argv(argv)
   {
-  isRunning = false;
+  isRun = false;
 }
 
 uav1::~uav1() {
@@ -38,7 +39,7 @@ bool uav1::init(std::string uavname)
   {
     return false;
   }
-
+  cout << "uav1Name  " << uavname << endl;
 //  ros::start(); // explicitly needed since our nodehandle is going out of scope.
   ros::NodeHandle nh;// 第一次创建节点时会自动调用start()
   image_transport::ImageTransport it(nh);
@@ -49,6 +50,9 @@ bool uav1::init(std::string uavname)
   cameraControl_pub = nh.advertise<geometry_msgs::Twist>(uavname + "/camera_control", 1);    // 发布相机控制命令
   batteryData_sub= nh.subscribe(uavname + "/states/common/CommonState/BatteryStateChanged",2,&uav1::receiveBatteryData_cb,this);    // 发布 移动命令
   receiveImage_sub = it.subscribe(uavname + "/image_raw",5,&uav1::receiveImage_cb,this);// 订阅 图像信息
+//  gpsData_sub = nh.subscribe<sensor_msgs::NavSatFix>(uavname + "/fix",2,&uav1::gpsData_cb, this);
+  odomData_sub = nh.subscribe<nav_msgs::Odometry>(uavname + "/odom",2,&uav1::odomData_cb, this);
+
 
   //用于在gazebo仿真中测试
 //  receiveImage_sub = it.subscribe("iris_1/camera_Monocular/image_raw",5,&uav1::receiveImage_cb,this);
@@ -60,22 +64,25 @@ bool uav1::init(std::string uavname)
 
 void uav1::run()
 {
+  cout << "6666666666666666" << endl;
   ros::Rate loop_rate(20);
 
   cameraControl(20, 0);
 
   while ( ros::ok() )
   {
+    if(isRun == false) break;
 
     moveControl();
-
-    if(isRunning == false) break;
+//    cout << "1111111" << endl;
 
     ros::spinOnce();
     loop_rate.sleep();
   }
   std::cout << "uav1 Ros shutdown, proceeding to close the gui." << std::endl;
-  Q_EMIT rosShutdown(1); // used to signal the gui for a shutdown (useful to roslaunch)
+   // used to signal the gui for a shutdown (useful to roslaunch)
+  Q_EMIT rosShutdown(1);
+//  return;
 }
 
 
@@ -99,7 +106,33 @@ void uav1::receiveImage_cb(const sensor_msgs::ImageConstPtr& msg)
 void uav1::receiveBatteryData_cb(const CommonCommonStateBatteryStateChanged::ConstPtr& msg)
 {
   batteryData = msg->percent;
-  Q_EMIT showUav1BatteryData(batteryData,true);
+  Q_EMIT batteryDataSignal(batteryData,true);
+}
+void uav1::gpsData_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
+{
+//  cout << "uav1 gpsData_cb" << endl;
+  if(msg->status.status == 0)
+    Q_EMIT gpsDataSignal(1,msg->latitude, msg->longitude);
+  else
+  {
+    Q_EMIT gpsDataSignal(1,0.0, 0.0);
+    cout << "uav1 no GPS!" << endl;
+  }
+}
+void uav1::odomData_cb(const nav_msgs::Odometry::ConstPtr& msg)
+{
+//  cout << "uav1 odomData_cb" << endl;
+
+  cuurrentPose = msg->pose.pose;
+  Q_EMIT odomDataSignal(1,cuurrentPose);
+
+//  tf::quaternionMsgToTF(msg->pose.pose.orientation,q);
+//  double roll,pitch,yaw ;
+//  tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
+//  cout << "uav1 yaw:  " << yaw <<  endl;
+
+
 }
 
-}  // namespace image_stitching
+
+}  // nanav_msgs/Odometrymespace image_stitching

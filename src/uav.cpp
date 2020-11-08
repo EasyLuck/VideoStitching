@@ -15,6 +15,11 @@ uav::uav()
 
   batteryData = 0; //
 
+  double a_bit = 6378137.0;
+  double b_bit = 6356752.31414;
+  double e2_bit = (pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit)*(pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit);
+  double PI_bit = 3.1415926;
+
 //  isRunning = false;
 }
 
@@ -37,7 +42,7 @@ void uav::cmd(double x,double y,double z,double yaw)
     cmd_vel.linear.z = z;
     cmd_vel.angular.z = yaw;
     cmd_pub.publish(cmd_vel);
-    cout << "bebop  send cmd! " << endl;
+//    cout << "bebop  send cmd! " << endl;
 //    ROS_INFO("bebop  send cmd! ");
 }
 
@@ -48,8 +53,17 @@ void uav::cameraControl(double vertical, double horizontal)
   cameraControl_pub.publish(cameraControl_vel);
 }
 
+double uav::xControl()
+{
+  double k = 0.2;
+  double out = k *(cuurrentPose.position.x - 0);
+  return  out;
+}
+
 void uav::moveControl()
 {
+//  pidout = xControl();
+
   if(forward == true)   //前进
     cmd(0.15, 0, 0, 0);
   if(backward == true)  //后退
@@ -68,5 +82,9 @@ void uav::moveControl()
     cmd(0, 0, 0, -0.1);
 
   if(!forward && !backward && !flayLeft && !flayRight && !flayUp && !flayDown && !turnLeft && !turnRight )
-    cmd(0, 0, 0, 0);
+  {
+//    cout << "                            pidout " << pidout <<endl;
+//    cmd(0, 0, 0, 0);
+  }
 }
+

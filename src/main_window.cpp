@@ -50,21 +50,30 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   imageStitching = new stitching();
   uavControl = new uav_control();
+
+  // 提示 connot queue arguments of type 'xxx'
   qRegisterMetaType< cv::Mat >("cv::Mat");
+  qRegisterMetaType< geometry_msgs::Pose >("geometry_msgs::Pose");
 
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
 
   QObject::connect(&uav1Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav1Node,SIGNAL(showUav1ImageSignal(QImage)),this,SLOT(deal_showUav1ImageSignal(QImage)));
-  QObject::connect(&uav1Node,SIGNAL(showUav1BatteryData(int,bool)),this,SLOT(deal_showUav1BatteryData(int,bool)));
+  QObject::connect(&uav1Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav1batteryDataSignal(int,bool)));
+  QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
   QObject::connect(&uav2Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav2Node,SIGNAL(showUav2ImageSignal(QImage)),this,SLOT(deal_showUav2ImageSignal(QImage)));
-  QObject::connect(&uav2Node,SIGNAL(showUav2BatteryData(int,bool)),this,SLOT(deal_showUav2BatteryData(int,bool)));
+  QObject::connect(&uav2Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav2batteryDataSignal(int,bool)));
+  QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
   QObject::connect(&uav3Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav3Node,SIGNAL(showUav3ImageSignal(QImage)),this,SLOT(deal_showUav3ImageSignal(QImage)));
-  QObject::connect(&uav3Node,SIGNAL(showUav3BatteryData(int,bool)),this,SLOT(deal_showUav3BatteryData(int,bool)));
+  QObject::connect(&uav3Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav3batteryDataSignal(int,bool)));
+  QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
   QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),imageStitching,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
   QObject::connect(&uav2Node,SIGNAL(uav2RgbimageSignal(cv::Mat)),imageStitching,SLOT(deal_uav2RgbimageSignal(cv::Mat)));
@@ -72,7 +81,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   QObject::connect(imageStitching,SIGNAL(showStitchingImageSignal(QImage)),this,SLOT(deal_showStitchingImageSignal(QImage)));
   // 线程之间同步重合度
-  QObject::connect(imageStitching,SIGNAL(overlapRateSignal(QImage)),uavControl,SLOT(deal_overlapRateSignal(double,double)));
+  QObject::connect(imageStitching,SIGNAL(overlapRateSignal(double,double)),uavControl,SLOT(deal_overlapRateSignal(double,double)));
 
   //uav1 飞行控制
   QObject::connect(moveUav1,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
@@ -116,6 +125,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(uavControl,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(uavControl,SIGNAL(uav_FBcontrolSignal(double, double, double, double)),this,SLOT(deal_uav_FBcontrolSignal(double, double, double, double)));
 
 
     uav1Name = "bebop3";//默认值
@@ -152,9 +162,9 @@ MainWindow::~MainWindow() {}
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 
-  uav1Node.isRunning = false;
-  uav2Node.isRunning = false;
-  uav3Node.isRunning = false;
+  uav1Node.isRun = false;
+  uav2Node.isRun = false;
+  uav3Node.isRun = false;
 
   moveUav2->close();
   moveUav1->close();
@@ -174,10 +184,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
   delete imageStitching;
   delete uavControl;
+  imageStitching = NULL;
+  uavControl = NULL;
+
+  delete moveUav1;
+  delete moveUav2;
+  delete moveUav3;
+
+  moveUav1 = NULL;
+  moveUav2 = NULL;
+  moveUav3 = NULL;
   QMainWindow::closeEvent(event);
-//  delete moveUav1;
-//  delete moveUav2;
-//  delete moveUav3;
+
 }
 
 /*****************************************************************************
@@ -220,13 +238,28 @@ void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horiz
   else if(UAVx == 3)
     uav3Node.cameraControl(vertical,horizontal);
 }
+void MainWindow::deal_uav_FBcontrolSignal(double controlUav1, double controlUav3, double yawUav1, double yawUav3)
+{
+  if(yawUav1 >= 0.02 || yawUav1 <= -0.02)
+    uav1Node.cmd(0, 0, 0, yawUav1);
+  else
+    uav1Node.cmd(controlUav1, 0, 0, yawUav1);
 
+  std::cout <<"controlUav1  " << controlUav1 << std::endl;
+//  uav3Node.cmd(uav3Control, 0, 0, 0);
+}
 void  MainWindow::deal_rosShutdown(int UAVx)
 {
   if(UAVx == 1)
   {
-    uav1Node.quit();
-    uav1Node.wait();
+    std::cout << "11111111" << std::endl;
+//    if(uav1Node.isRunning() == true)
+//    {
+////      uav1Node.st
+//      std::cout << "22222222222" << std::endl;
+//      uav1Node.quit();
+//      uav1Node.wait();
+//    }
     ui.uav1Land_pBtn->setEnabled(false);
     ui.uav1Takeoff_pBtn->setEnabled(false);
     ui.uav1Move_pBtn->setEnabled(false);
@@ -250,7 +283,10 @@ void  MainWindow::deal_rosShutdown(int UAVx)
     ui.uav3Move_pBtn->setEnabled(false);
     ui.uav3Battery_pBar->setEnabled(false);
   }
+//  uavControl->quit();
+//  uavControl->wait();
 }
+
 /* ******************************************************  无人机1 ******************************************************* */
 
 void MainWindow::displayUav1Image(const QImage image)
@@ -270,7 +306,7 @@ void MainWindow::deal_showUav1ImageSignal(QImage image)
 //  i++;
   displayUav1Image(image);
 }
-void MainWindow::deal_showUav1BatteryData(int batteryData, bool batteryState)
+void MainWindow::deal_uav1batteryDataSignal(int batteryData, bool batteryState)
 {
   if(batteryState == false)
     ui.uav1Battery_pBar->setEnabled(false);
@@ -313,12 +349,13 @@ void MainWindow::on_uav1Move_pBtn_clicked()
 
 void MainWindow::on_uav1ShowImage_pBtn_clicked()
 {
-  if(uav1Node.isRunning == false)
+  if(uav1Node.isRun == false)
   {
-    uav1Node.isRunning = true;
+    uav1Name = ui.uav1Name_cBox->currentText().toStdString();
+    uav1Node.isRun = true;
     if ( !uav1Node.init(uav1Name) )
     {
-      uav1Node.isRunning = false;
+      uav1Node.isRun = false;
       showNoMasterMessage();
     }
     else
@@ -330,10 +367,14 @@ void MainWindow::on_uav1ShowImage_pBtn_clicked()
       ui.uav1ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
-  else if(uav1Node.isRunning == true)
+  else if(uav1Node.isRun == true)
   {
-    uav1Node.isRunning = false;
+    uav1Node.isRun = false;
     ui.uav1ShowImage_pBtn->setText(QString::fromUtf8("启动"));
+//    ui.uav1Land_pBtn->setEnabled(false);
+//    ui.uav1Takeoff_pBtn->setEnabled(false);
+//    ui.uav1Move_pBtn->setEnabled(false);
+//    ui.uav1Battery_pBar->setEnabled(false);
   }
 
 }
@@ -355,7 +396,7 @@ void MainWindow::displayUav2Image(const QImage image)
 //  ui.uav2Image_label->resize(ui.uav2Image_label->pixmap()->size());
   uav2Image_mutex_.unlock();
 }
-void MainWindow::deal_showUav2BatteryData(int batteryData, bool batteryState)
+void MainWindow::deal_uav2batteryDataSignal(int batteryData, bool batteryState)
 {
   if(batteryState == false)
     ui.uav2Battery_pBar->setEnabled(false);
@@ -398,12 +439,13 @@ void MainWindow::on_uav2Move_pBtn_clicked()
 void MainWindow::on_uav2ShowImage_pBtn_clicked()
 {
 
-  if(uav2Node.isRunning == false)
+  if(uav2Node.isRun == false)
   {
-    uav2Node.isRunning = true;
+    uav2Name = ui.uav2Name_cBox->currentText().toStdString();
+    uav2Node.isRun = true;
     if ( !uav2Node.init(uav2Name) )
     {
-      uav2Node.isRunning = false;
+      uav2Node.isRun = false;
       showNoMasterMessage();
     }
     else
@@ -415,9 +457,9 @@ void MainWindow::on_uav2ShowImage_pBtn_clicked()
       ui.uav2ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
-  else if(uav2Node.isRunning == true)
+  else if(uav2Node.isRun == true)
   {
-    uav2Node.isRunning = false;
+    uav2Node.isRun = false;
     ui.uav2ShowImage_pBtn->setText(QString::fromUtf8("启动"));
   }
 
@@ -438,7 +480,7 @@ void MainWindow::displayUav3Image(const QImage image)
 //  ui.uav3Image_label->resize(ui.uav3Image_label->pixmap()->size());
   uav3Image_mutex_.unlock();
 }
-void MainWindow::deal_showUav3BatteryData(int batteryData, bool batteryState)
+void MainWindow::deal_uav3batteryDataSignal(int batteryData, bool batteryState)
 {
   if(batteryState == false)
     ui.uav3Battery_pBar->setEnabled(false);
@@ -481,12 +523,13 @@ void MainWindow::on_uav3Move_pBtn_clicked()
 
 void MainWindow::on_uav3ShowImage_pBtn_clicked()
 {
-  if(uav3Node.isRunning == false)
+  if(uav3Node.isRun == false)
   {
-    uav3Node.isRunning = true;
+    uav3Name = ui.uav3Name_cBox->currentText().toStdString();
+    uav3Node.isRun = true;
     if ( !uav3Node.init(uav3Name) )
     {
-      uav3Node.isRunning = false;
+      uav3Node.isRun = false;
       showNoMasterMessage();
     }
     else
@@ -498,9 +541,9 @@ void MainWindow::on_uav3ShowImage_pBtn_clicked()
       ui.uav3ShowImage_pBtn->setText(QString::fromUtf8("停止"));
     }
   }
-  else if(uav3Node.isRunning == true)
+  else if(uav3Node.isRun == true)
   {
-    uav3Node.isRunning = false;
+    uav3Node.isRun = false;
     ui.uav3ShowImage_pBtn->setText(QString::fromUtf8("启动"));
   }
 }
@@ -597,16 +640,33 @@ void MainWindow::on_autoFly_pBtn_clicked()
 {
   if(uavControl->isAutoFly == false)
   {
+//    uavControl->autoFlyThreadStatue = true;
     uavControl->isAutoFly = true;
     ui.autoFly_pBtn->setText(QString::fromUtf8("切换手动模式"));
+//    uavControl->start();
   }
   else {
+//    uavControl->autoFlyThreadStatue = false;
     uavControl->isAutoFly = false;
     ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+//    uavControl->quit();
+//    uavControl->wait();
   }
 }
 
+void MainWindow::on_setYawErr_pBtn_clicked()
+{
+  uavControl->yawOffset[1] = ui.yawOffset_uav1_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+  uavControl->yawOffset[2] = ui.yawOffset_uav2_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+  uavControl->yawOffset[3] = ui.yawOffset_uav3_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+
+  uavControl->yawOffset_21 = uavControl->yawOffset[2] - uavControl->yawOffset[1];
+
+}
+
 }  // namespace image_stitching
+
+
 
 
 
