@@ -50,16 +50,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 
   MyTimer = new QTimer(this);
-//  moveUav1 = new moveUav(1);
-//  moveUav2 = new moveUav(2);
-//  moveUav3 = new moveUav(3);
-
-//  imageStitching = new stitching();
-//  uavControl = new uav_control();
 
   // 提示 connot queue arguments of type 'xxx'
   qRegisterMetaType< cv::Mat >("cv::Mat");
-  qRegisterMetaType< geometry_msgs::Pose >("geometry_msgs::Pose");
+  qRegisterMetaType< nav_msgs::Odometry >("nav_msgs::Odometry");
   qRegisterMetaType< geometry_msgs::Twist >("geometry_msgs::Twist");
 
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
@@ -67,22 +61,20 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(MyTimer,SIGNAL(timeout()), this, SLOT(deal_timeout()));
 
   QObject::connect(&uav1Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-//  QObject::connect(&uav1Node,SIGNAL(showUav1ImageSignal(QImage)),this,SLOT(deal_showUav1ImageSignal(QImage)));
   QObject::connect(&uav1Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav1batteryDataSignal(int,bool)));
   QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
   QObject::connect(&uav2Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-//  QObject::connect(&uav2Node,SIGNAL(showUav2ImageSignal(QImage)),this,SLOT(deal_showUav2ImageSignal(QImage)));
   QObject::connect(&uav2Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav2batteryDataSignal(int,bool)));
   QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
   QObject::connect(&uav3Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-//  QObject::connect(&uav3Node,SIGNAL(showUav3ImageSignal(QImage)),this,SLOT(deal_showUav3ImageSignal(QImage)));
   QObject::connect(&uav3Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav3batteryDataSignal(int,bool)));
   QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
+
 
   QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),this,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
   QObject::connect(&uav2Node,SIGNAL(uav2RgbimageSignal(cv::Mat)),this,SLOT(deal_uav2RgbimageSignal(cv::Mat)));
@@ -134,7 +126,6 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&uavControl,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-//  QObject::connect(&uavControl,SIGNAL(uav_FBcontrolSignal(double, double, double, double)),this,SLOT(deal_uav_FBcontrolSignal(double, double, double, double)));
   QObject::connect(&uavControl,SIGNAL(uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)),this,SLOT(deal_uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)));
 
 
@@ -195,18 +186,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
   uavControl.quit();
   uavControl.wait();
 
-//  delete imageStitching;
-//  delete uavControl;
-//  imageStitching = NULL;
-//  uavControl = NULL;
+  MyTimer->stop();
 
-//  delete moveUav1;
-//  delete moveUav2;
-//  delete moveUav3;
-
-//  moveUav1 = NULL;
-//  moveUav2 = NULL;
-//  moveUav3 = NULL;
   QMainWindow::closeEvent(event);
 }
 
@@ -226,20 +207,19 @@ void MainWindow::deal_timeout()
   QString currentYaw[3];
   if(uavControl.setYawOffset_ok)
   {
-    currentYaw[0] = QString("%1").arg((uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180.0 / 3.1415926) ;
-    currentYaw[1] = QString("%1").arg((uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180.0 / 3.1415926) ;
-    currentYaw[2] = QString("%1").arg((uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180.0 / 3.1415926) ;
+    currentYaw[0] = QString::number((uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180.0 / 3.1415926, 'g', 2);
+    currentYaw[1] = QString::number((uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180.0 / 3.1415926, 'g', 2);
+    currentYaw[2] = QString::number((uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180.0 / 3.1415926, 'g', 2);
   }
   else
   {
-    currentYaw[0] = QString("%1").arg(uavControl.currentYaw[1] * 180.0 / 3.1415926) ;
-    currentYaw[1] = QString("%1").arg(uavControl.currentYaw[2] * 180.0 / 3.1415926) ;
-    currentYaw[2] = QString("%1").arg(uavControl.currentYaw[3] * 180.0 / 3.1415926) ;
+    currentYaw[0] = QString::number(uavControl.currentYaw[1] * 180.0 / 3.1415926,'g',2);
+    currentYaw[1] = QString::number(uavControl.currentYaw[2] * 180.0 / 3.1415926,'g',2);
+    currentYaw[2] = QString::number(uavControl.currentYaw[3] * 180.0 / 3.1415926,'g',2);
   }
   ui.yawOffset_uav1_lineEdit->setText(currentYaw[0]) ;
   ui.yawOffset_uav2_lineEdit->setText(currentYaw[1]) ;
   ui.yawOffset_uav3_lineEdit->setText(currentYaw[2]) ;
-//  std::cout << "this is deal_timeout" << std::endl;
 }
 
 void MainWindow::deal_showStitchingImageSignal(QImage image)
@@ -290,6 +270,11 @@ void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVel
     uav1Node.cmd(0, 0, 0, uav1TargetVelocity.angular.z);
   else
     uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, 0, uav1TargetVelocity.angular.z);
+
+  if(uav3TargetVelocity.angular.z >= 0.02 || uav3TargetVelocity.angular.z <= -0.02)
+    uav3Node.cmd(0, 0, 0, uav3TargetVelocity.angular.z);
+  else
+    uav3Node.cmd(uav3TargetVelocity.linear.x, uav3TargetVelocity.linear.y, 0, uav3TargetVelocity.angular.z);
 }
 
 void  MainWindow::deal_rosShutdown(int UAVx)
@@ -440,10 +425,6 @@ void MainWindow::on_uav1ShowImage_pBtn_clicked()
   {
     uav1Node.isRun = false;
     ui.uav1ShowImage_pBtn->setText(QString::fromUtf8("启动"));
-//    ui.uav1Land_pBtn->setEnabled(false);
-//    ui.uav1Takeoff_pBtn->setEnabled(false);
-//    ui.uav1Move_pBtn->setEnabled(false);
-//    ui.uav1Battery_pBar->setEnabled(false);
   }
 
 }
@@ -771,11 +752,11 @@ void MainWindow::on_setYawErr_pBtn_clicked()
 {
   if(!uavControl.setYawOffset_ok)
   {
-    uavControl.yawOffset[1] = ui.yawOffset_uav1_lineEdit->text().toDouble() * 3.1415926 / 180.0;
-    uavControl.yawOffset[2] = ui.yawOffset_uav2_lineEdit->text().toDouble() * 3.1415926 / 180.0;
-    uavControl.yawOffset[3] = ui.yawOffset_uav3_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+    uavControl.yawOffset[1] = uavControl.currentYaw[1];
+    uavControl.yawOffset[2] = uavControl.currentYaw[2];
+    uavControl.yawOffset[3] = uavControl.currentYaw[3];
     uavControl.yawOffset_21 = uavControl.yawOffset[2] - uavControl.yawOffset[1];
-//    uavControl.yawOffset_23 = uavControl.yawOffset[2] - uavControl.yawOffset[3];
+    uavControl.yawOffset_23 = uavControl.yawOffset[2] - uavControl.yawOffset[3];
     ui.setYawErr_pBtn->setText(QString::fromUtf8("已设定"));
 //    ui.setYawErr_pBtn->setStyleSheet("color:rgb(255,0,0)");
 //    背景色可以用函数setStyleSheet("background: rgb(0,255,0));

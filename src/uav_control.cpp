@@ -48,8 +48,16 @@ uav_control::uav_control(){
   yawOffset[3] = 0;
 
   y_Offset_21 = 1.5;
+  y_Offset_23 = -1.5;
   yawOffset_21 = 0;
+  yawOffset_23 = 0;
   setYawOffset_ok = false;
+
+  lastPosition[1].x = 0;
+  lastPosition[1].y = 0;
+  lastPosition[1].z = 0;
+  lastPosition[3] = lastPosition[1];
+  delatT = 10;
 
   gpsReceiveCnt = 0;
 
@@ -94,24 +102,17 @@ void uav_control::deal_overlapRateSignal(double overlapRate_left,double overlapR
   this->currentOverlap_left = overlapRate_left;
   this->currentOverlap_right = overlapRate_right;
 }
-void uav_control::deal_uavodomDataSignal(int UAVx, geometry_msgs::Pose currentPose)
+void uav_control::deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdom)
 {
-  currentPosition[UAVx] = currentPose.position;
+  currentPosition[UAVx] = currentOdom.pose.pose.position;
+
   tf::Quaternion q;
-  tf::quaternionMsgToTF(currentPose.orientation,q);
+  tf::quaternionMsgToTF(currentOdom.pose.pose.orientation, q);
   double roll,pitch, yaw;
   tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
   currentYaw[UAVx] = yaw;
 
-//  if(UAVx == 1)
-//    cout << "roll,pitch, yaw  :  " << roll*180.0/PI_bit << " " << pitch*180.0/PI_bit << " " << yaw*180.0/PI_bit << endl;
-//  if(UAVx == 2)
-//    cout << "roll,pitch, yaw  :------------------------------" << roll*180.0/PI_bit << " " << pitch*180.0/PI_bit << " " << yaw*180.0/PI_bit << endl;
-//  if(UAVx == 3)
-//    cout << "----------------" << roll*180.0/PI_bit << " " << pitch*180.0/PI_bit << " " << yaw*180.0/PI_bit << endl;
-
-
-  //  cout << "deal_uavodomDataSignal UAVx : " << UAVx << endl;
+  currentVelocity[UAVx] = currentOdom.twist.twist;
 }
 
 /*
@@ -124,48 +125,92 @@ void uav_control::deal_uavodomDataSignal(int UAVx, geometry_msgs::Pose currentPo
 void uav_control::uav_FBcontrol()
 {
 
-  uav1pid.x.kp = 0.2;
-  uav1pid.y.kp = 0.2;
+  uav1pid.x.kp = 0.1;
+  uav1pid.x.kd = 0.1;
+  uav1pid.y.kp = 0.1;
+  uav1pid.y.kd = 0.1;
   uav1pid.z.kp = 0.2;
   uav1pid.yaw.kp = 0.3;
 
-  // 计算 yaw 控制输出量
-  double yawErr_12 = currentYaw[2] - currentYaw[1] - yawOffset_21;
-  if(abs(yawErr_12) > PI)
-  {
-    if(yawErr_12 > 0)
-      yawErr_12 = yawErr_12 - 2*PI;
-    if(yawErr_12 < 0)
-      yawErr_12 = yawErr_12 + 2*PI;
-  }
-  uav1TargetVelocity.angular.z = uav1pid.yaw.kp * yawErr_12;
+  uav3pid.x.kp = 0.1;
+  uav3pid.x.kd = 0.1;
+  uav3pid.y.kp = 0.1;
+  uav3pid.y.kd = 0.1;
+  uav3pid.z.kp = 0.2;
+  uav3pid.yaw.kp = 0.3;
 
-  // 计算Z轴控制量
+  /* *************************** 计算 yaw 控制输出量 *************************** */
+  // UAV1
+
+  uav1pid.yaw.error = currentYaw[2] - currentYaw[1] - yawOffset_21;
+  if(abs(uav1pid.yaw.error) > PI)
+  {
+    if(uav1pid.yaw.error > 0)
+      uav1pid.yaw.error = uav1pid.yaw.error - 2*PI;
+    if(uav1pid.yaw.error < 0)
+      uav1pid.yaw.error = uav1pid.yaw.error + 2*PI;
+  }
+  uav1TargetVelocity.angular.z = uav1pid.yaw.kp * uav1pid.yaw.error;
+  // UAV3
+  uav3pid.yaw.error = currentYaw[2] - currentYaw[3] - yawOffset_23;
+  if(abs(uav3pid.yaw.error) > PI)
+  {
+    if(uav3pid.yaw.error > 0)
+      uav3pid.yaw.error = uav3pid.yaw.error - 2*PI;
+    if(uav3pid.yaw.error < 0)
+      uav3pid.yaw.error = uav3pid.yaw.error + 2*PI;
+  }
+  uav3TargetVelocity.angular.z = uav3pid.yaw.kp * uav3pid.yaw.error;
+
+  /* *************************** 计算Z轴控制量 *************************** */
+  // UAV1
   uav1pid.z.error = currentPosition[2].z - currentPosition[1].z; // uav2.z - uav1.z
   uav1TargetVelocity.linear.z = uav1pid.z.kp * uav1pid.z.error;
-  // 计算X Y轴控制输出量
+  // UAV3
+  uav3pid.z.error = currentPosition[2].z - currentPosition[3].z; // uav2.z - uav3.z
+  uav3TargetVelocity.linear.z = uav3pid.z.kp * uav3pid.z.error;
+
+  /* *************************** 计算X Y轴控制输出量 *************************** */
+  Eigen::Matrix<double, 2, 1> uavError_global,uavError_body;
+  Eigen::Matrix<double, 2, 2> uav_R;
+  // UAV1
   uav1pid.x.error = currentPosition[2].x - y_Offset_21 * sin(currentYaw[2]) - currentPosition[1].x;
   currentPosition[1].y = currentPosition[1].y + y_Offset_21;// global坐标系下的坐标
   uav1pid.y.error = currentPosition[2].y + y_Offset_21 * cos(currentYaw[2]) - currentPosition[1].y;
+  uavError_global << uav1pid.x.error , uav1pid.y.error;
+  uav_R << cos(currentYaw[1]), sin(currentYaw[1]), -sin(currentYaw[1]), cos(currentYaw[1]);
+  uavError_body = uav_R * uavError_global;
+  uav1TargetVelocity.linear.x = uav1pid.x.kp * uavError_body(0,0) + uav1pid.x.kd * (0 - currentVelocity[1].linear.x); //
+  uav1TargetVelocity.linear.y = uav1pid.y.kp * uavError_body(1,0) + uav1pid.y.kd * (0 - currentVelocity[1].linear.y); //
 
-  Eigen::Matrix<double, 2, 1> uav1Error_global,uav1Error_body;
-  uav1Error_global << uav1pid.x.error , uav1pid.y.error;
-  Eigen::Matrix<double, 2, 2> uav1_R;
-  uav1_R << cos(currentYaw[1]), sin(currentYaw[1]), -sin(currentYaw[1]), cos(currentYaw[1]);
-  uav1Error_body = uav1_R * uav1Error_global;
-  uav1TargetVelocity.linear.x = uav1pid.x.kp * uav1Error_body(0,0) ; //
-  uav1TargetVelocity.linear.y = uav1pid.y.kp * uav1Error_body(1,0) ; //
+  // UAV3
+  uav3pid.x.error = currentPosition[2].x - y_Offset_23 * sin(currentYaw[2]) - currentPosition[3].x;
+  currentPosition[3].y = currentPosition[3].y + y_Offset_23;// global坐标系下的坐标
+  uav3pid.y.error = currentPosition[2].y + y_Offset_23 * cos(currentYaw[2]) - currentPosition[3].y;
+  uavError_global << uav3pid.x.error , uav3pid.y.error;
+  uav_R << cos(currentYaw[3]), sin(currentYaw[3]), -sin(currentYaw[3]), cos(currentYaw[3]);
+  uavError_body = uav_R * uavError_global;
+  uav3TargetVelocity.linear.x = uav3pid.x.kp * uavError_body(0,0) + uav3pid.x.kd * (0 - currentVelocity[3].linear.x); //
+  uav3TargetVelocity.linear.y = uav3pid.y.kp * uavError_body(1,0) + uav3pid.y.kd * (0 - currentVelocity[3].linear.y); //
 
   // 限制幅值
   limiter(&uav1TargetVelocity.linear.x,0.2,-0.2);
   limiter(&uav1TargetVelocity.linear.y,0.2,-0.2);
   limiter(&uav1TargetVelocity.linear.z,0.2,-0.2);
   limiter(&uav1TargetVelocity.angular.z,0.2,-0.2);
+  limiter(&uav3TargetVelocity.linear.x,0.2,-0.2);
+  limiter(&uav3TargetVelocity.linear.y,0.2,-0.2);
+  limiter(&uav3TargetVelocity.linear.z,0.2,-0.2);
+  limiter(&uav3TargetVelocity.angular.z,0.2,-0.2);
 
+  // 发送控制信号 （接受者在main_window.cpp）
   Q_EMIT uavTargetVelocitySignal(uav1TargetVelocity,uav3TargetVelocity);
 
-  cout << "currentPosition: --------------------------" << currentPosition[1].x << "  "<< currentPosition[2].x << endl;
-  cout << "           out :     " << uav1TargetVelocity.linear.x << "   "<< uav1TargetVelocity.linear.y << endl;
+  // 打印信息
+  cout << setprecision(6) << "currentPosition: ------------------------------------------" << currentPosition[1].x << "  "<< currentPosition[2].x
+                                                                                    << "  "<< currentPosition[3].x << "  "<< currentPosition[3].x<< endl;
+  cout << setprecision(6) << "           out : " << uav1TargetVelocity.linear.x << "   "<< uav1TargetVelocity.linear.y
+                                                 << "  " << uav3TargetVelocity.linear.x << "   "<< uav3TargetVelocity.linear.y<< endl;
 
 //  cout << "  --------------------------  " << uav1Position_body(0,0) << "  "<< uav2Position_body(0,0) << endl;
 }

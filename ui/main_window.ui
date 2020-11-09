@@ -1039,9 +1039,9 @@
    <widget class="QGroupBox" name="groupBox_11">
     <property name="geometry">
      <rect>
-      <x>1030</x>
-      <y>510</y>
-      <width>251</width>
+      <x>1050</x>
+      <y>500</y>
+      <width>231</width>
       <height>101</height>
      </rect>
     </property>
@@ -1070,7 +1070,7 @@
     <widget class="QLineEdit" name="yawOffset_uav3_lineEdit">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>160</x>
        <y>40</y>
        <width>71</width>
        <height>25</height>
@@ -1080,9 +1080,9 @@
     <widget class="QLineEdit" name="yawOffset_uav2_lineEdit">
      <property name="geometry">
       <rect>
-       <x>90</x>
+       <x>80</x>
        <y>40</y>
-       <width>91</width>
+       <width>71</width>
        <height>25</height>
       </rect>
      </property>
@@ -1092,7 +1092,7 @@
       <rect>
        <x>0</x>
        <y>40</y>
-       <width>91</width>
+       <width>71</width>
        <height>25</height>
       </rect>
      </property>

@@ -38,7 +38,7 @@ Q_SIGNALS://Qt信号
   void uav1RgbimageSignal(cv::Mat);   // 发送Opencv转换Rgbimage
   void batteryDataSignal(int,bool);  // 发送电池电量信息
   void gpsDataSignal(int, double, double);  // 发送GPS信息
-  void odomDataSignal(int, geometry_msgs::Pose);  // 发送GPS信息
+  void odomDataSignal(int, nav_msgs::Odometry);  // 发送GPS信息
   void rosShutdown(int);
 
 private:

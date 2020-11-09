@@ -5,6 +5,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <tf/tf.h>
 #endif
 
@@ -76,11 +77,15 @@ public:
 
   // odom 控制
   geometry_msgs::Point currentPosition[4];
+  geometry_msgs::Twist currentVelocity[4];
+  geometry_msgs::Point lastPosition[4];
+
   double currentYaw[4];
   double yawOffset[4];  // 与正北方向的偏差
   double yawOffset_21,yawOffset_23;
   double y_Offset_21,y_Offset_23;
   bool setYawOffset_ok; //标记是否已经校准yaw
+  double delatT;
 
   geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
 
@@ -101,7 +106,7 @@ public:
 public Q_SLOTS:
   void deal_overlapRateSignal(double overlapRate_left,double overlapRate_right);
   void deal_uavgpsDataSignal(int UAVx, double latitude, double longitude);
-  void deal_uavodomDataSignal(int UAVx, geometry_msgs::Pose currentPose);  // 发送GPS信息
+  void deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdom);  // 发送GPS信息
 
 Q_SIGNALS://Qt信号
   void forwardSignal(int,bool);
@@ -113,7 +118,6 @@ Q_SIGNALS://Qt信号
   void turnLeftSignal(int,bool);
   void turnRightSignal(int,bool);
 
-  void uav_FBcontrolSignal(double, double, double, double);
   void uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist);
 
 

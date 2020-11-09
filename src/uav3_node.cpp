@@ -114,9 +114,10 @@ void uav3::gpsData_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
 }
 void uav3::odomData_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-  cout << "uav3 odomData_cb" << endl;
-  cuurrentPose = msg->pose.pose;
-  Q_EMIT odomDataSignal(3,cuurrentPose);
+//  cout << "uav3 odomData_cb" << endl;
+  cuurrentOdom.pose = msg->pose;
+  cuurrentOdom.twist = msg->twist;
+  Q_EMIT odomDataSignal(3,cuurrentOdom);
 }
 
 

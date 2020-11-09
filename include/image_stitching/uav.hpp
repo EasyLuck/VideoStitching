@@ -44,7 +44,7 @@ public:
   bool receiveImageFlag;//接受到图像为true 处理完设置为false
 
   geometry_msgs::Pose cuurrentPose;
-
+  nav_msgs::Odometry cuurrentOdom;
   //控制无人机的移动方向
   bool forward;
   bool backward;

@@ -114,8 +114,9 @@ void uav2::odomData_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 //  cout << "uav2 odomData_cb" << endl;
 
-  cuurrentPose = msg->pose.pose;
-  Q_EMIT odomDataSignal(2,cuurrentPose);
+  cuurrentOdom.pose = msg->pose;
+  cuurrentOdom.twist = msg->twist;
+  Q_EMIT odomDataSignal(2,cuurrentOdom);
 }
 
 }  // namespace image_stitching

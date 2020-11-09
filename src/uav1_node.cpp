@@ -64,7 +64,6 @@ bool uav1::init(std::string uavname)
 
 void uav1::run()
 {
-  cout << "6666666666666666" << endl;
   ros::Rate loop_rate(20);
 
   cameraControl(20, 0);
@@ -122,17 +121,9 @@ void uav1::gpsData_cb(const sensor_msgs::NavSatFix::ConstPtr& msg)
 }
 void uav1::odomData_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-//  cout << "uav1 odomData_cb" << endl;
-
-  cuurrentPose = msg->pose.pose;
-  Q_EMIT odomDataSignal(1,cuurrentPose);
-
-//  tf::quaternionMsgToTF(msg->pose.pose.orientation,q);
-//  double roll,pitch,yaw ;
-//  tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
-//  cout << "uav1 yaw:  " << yaw <<  endl;
-
-
+  cuurrentOdom.pose = msg->pose;
+  cuurrentOdom.twist = msg->twist;
+  Q_EMIT odomDataSignal(1,cuurrentOdom);
 }
 
 
