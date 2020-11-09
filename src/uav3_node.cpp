@@ -85,9 +85,9 @@ void uav3::receiveImage_cb(const sensor_msgs::ImageConstPtr& msg)
     {
         receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8)->image;
         Q_EMIT uav3RgbimageSignal(receiveImage);
-        ImageToQImage = QImage(receiveImage.data,receiveImage.cols,receiveImage.rows,receiveImage.step[0],QImage::Format_RGB888);
-        Q_EMIT showUav3ImageSignal(ImageToQImage);
-        receiveImageFlag = true ;
+//        ImageToQImage = QImage(receiveImage.data,receiveImage.cols,receiveImage.rows,receiveImage.step[0],QImage::Format_RGB888);
+//        Q_EMIT showUav3ImageSignal(ImageToQImage);
+//        receiveImageFlag = true ;
     }
     catch (cv_bridge::Exception& e)
     {

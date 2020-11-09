@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     image_stitching::MainWindow w(argc,argv);
     w.show();
+    w.move(30,30);
 
     app.connect(&app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()));
     int result = app.exec();

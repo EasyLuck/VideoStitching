@@ -41,91 +41,101 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   , uav1Node(argc,argv)
   , uav2Node(argc,argv)
   , uav3Node(argc,argv)
+  , moveUav1(1,parent)
+  , moveUav2(2,parent)
+  , moveUav3(3,parent)
+  , imageStitching()
+  , uavControl()
 {
 	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 
-  moveUav1 = new moveUav(1);
-  moveUav2 = new moveUav(2);
-  moveUav3 = new moveUav(3);
+  MyTimer = new QTimer(this);
+//  moveUav1 = new moveUav(1);
+//  moveUav2 = new moveUav(2);
+//  moveUav3 = new moveUav(3);
 
-  imageStitching = new stitching();
-  uavControl = new uav_control();
+//  imageStitching = new stitching();
+//  uavControl = new uav_control();
 
   // 提示 connot queue arguments of type 'xxx'
   qRegisterMetaType< cv::Mat >("cv::Mat");
   qRegisterMetaType< geometry_msgs::Pose >("geometry_msgs::Pose");
+  qRegisterMetaType< geometry_msgs::Twist >("geometry_msgs::Twist");
 
   QObject::connect(ui.actionAbout_Qt, SIGNAL(triggered(bool)), qApp, SLOT(aboutQt())); // qApp is a global variable for the application
 
+  QObject::connect(MyTimer,SIGNAL(timeout()), this, SLOT(deal_timeout()));
+
   QObject::connect(&uav1Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-  QObject::connect(&uav1Node,SIGNAL(showUav1ImageSignal(QImage)),this,SLOT(deal_showUav1ImageSignal(QImage)));
+//  QObject::connect(&uav1Node,SIGNAL(showUav1ImageSignal(QImage)),this,SLOT(deal_showUav1ImageSignal(QImage)));
   QObject::connect(&uav1Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav1batteryDataSignal(int,bool)));
-  QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
   QObject::connect(&uav2Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-  QObject::connect(&uav2Node,SIGNAL(showUav2ImageSignal(QImage)),this,SLOT(deal_showUav2ImageSignal(QImage)));
+//  QObject::connect(&uav2Node,SIGNAL(showUav2ImageSignal(QImage)),this,SLOT(deal_showUav2ImageSignal(QImage)));
   QObject::connect(&uav2Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav2batteryDataSignal(int,bool)));
-  QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
   QObject::connect(&uav3Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
-  QObject::connect(&uav3Node,SIGNAL(showUav3ImageSignal(QImage)),this,SLOT(deal_showUav3ImageSignal(QImage)));
+//  QObject::connect(&uav3Node,SIGNAL(showUav3ImageSignal(QImage)),this,SLOT(deal_showUav3ImageSignal(QImage)));
   QObject::connect(&uav3Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav3batteryDataSignal(int,bool)));
-  QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
-  QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
+  QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+  QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,geometry_msgs::Pose)),&uavControl,SLOT(deal_uavodomDataSignal(int,geometry_msgs::Pose)));
 
-  QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),imageStitching,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
-  QObject::connect(&uav2Node,SIGNAL(uav2RgbimageSignal(cv::Mat)),imageStitching,SLOT(deal_uav2RgbimageSignal(cv::Mat)));
-  QObject::connect(&uav3Node,SIGNAL(uav3RgbimageSignal(cv::Mat)),imageStitching,SLOT(deal_uav3RgbimageSignal(cv::Mat)));
+  QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),this,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
+  QObject::connect(&uav2Node,SIGNAL(uav2RgbimageSignal(cv::Mat)),this,SLOT(deal_uav2RgbimageSignal(cv::Mat)));
+  QObject::connect(&uav3Node,SIGNAL(uav3RgbimageSignal(cv::Mat)),this,SLOT(deal_uav3RgbimageSignal(cv::Mat)));
 
-  QObject::connect(imageStitching,SIGNAL(showStitchingImageSignal(QImage)),this,SLOT(deal_showStitchingImageSignal(QImage)));
+  QObject::connect(&imageStitching,SIGNAL(showStitchingImageSignal(QImage)),this,SLOT(deal_showStitchingImageSignal(QImage)));
   // 线程之间同步重合度
-  QObject::connect(imageStitching,SIGNAL(overlapRateSignal(double,double)),uavControl,SLOT(deal_overlapRateSignal(double,double)));
+  QObject::connect(&imageStitching,SIGNAL(overlapRateSignal(double,double)),&uavControl,SLOT(deal_overlapRateSignal(double,double)));
 
   //uav1 飞行控制
-  QObject::connect(moveUav1,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-  QObject::connect(moveUav1,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
+  QObject::connect(&moveUav1,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(&moveUav1,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //uav2 飞行控制
-  QObject::connect(moveUav2,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-  QObject::connect(moveUav2,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
+  QObject::connect(&moveUav2,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(&moveUav2,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //uav3 飞行控制
-  QObject::connect(moveUav3,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-  QObject::connect(moveUav3,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
+  QObject::connect(&moveUav3,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+  QObject::connect(&moveUav3,SIGNAL(cameraControSignal(int,double,double)),this,SLOT(deal_cameraControSignal(int,double,double)));
 
   //自主飞行控制
-  QObject::connect(uavControl,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-  QObject::connect(uavControl,SIGNAL(uav_FBcontrolSignal(double, double, double, double)),this,SLOT(deal_uav_FBcontrolSignal(double, double, double, double)));
+  QObject::connect(&uavControl,SIGNAL(forwardSignal(int,bool)),this,SLOT(deal_forwardSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(backwardSignal(int,bool)),this,SLOT(deal_backwardSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(flayLeftSignal(int,bool)),this,SLOT(deal_flayLeftSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(flayRightSignal(int,bool)),this,SLOT(deal_flayRightSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(flayUpSignal(int,bool)),this,SLOT(deal_flayUpSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
+  QObject::connect(&uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
+//  QObject::connect(&uavControl,SIGNAL(uav_FBcontrolSignal(double, double, double, double)),this,SLOT(deal_uav_FBcontrolSignal(double, double, double, double)));
+  QObject::connect(&uavControl,SIGNAL(uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)),this,SLOT(deal_uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)));
 
 
     uav1Name = "bebop3";//默认值
@@ -146,8 +156,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ui.uav3Move_pBtn->setEnabled(false);
     ui.uav3Battery_pBar->setEnabled(false);
 
-    imageStitching->start();
-    uavControl->start();
+    // 开启线程
+    imageStitching.start();
+    uavControl.start();
+
+    MyTimer->start(100);  //  100Ms定时器
 
     // 加载图片
     ui.stitchingImage_label->setPixmap(QPixmap(":/images/load1.png"));
@@ -166,36 +179,35 @@ void MainWindow::closeEvent(QCloseEvent *event)
   uav2Node.isRun = false;
   uav3Node.isRun = false;
 
-  moveUav2->close();
-  moveUav1->close();
-  moveUav3->close();
+  moveUav2.close();
+  moveUav1.close();
+  moveUav3.close();
 
   /* 关闭图像拼接进程 */
-  imageStitching->stitchingThreadStatue = false;
-  imageStitching->isStitching = false;
-  imageStitching->imageRecOK.wakeAll();
-  imageStitching->quit();
-  imageStitching->wait();
+  imageStitching.stitchingThreadStatue = false;
+  imageStitching.isStitching = false;
+  imageStitching.imageRecOK.wakeAll();
+  imageStitching.quit();
+  imageStitching.wait();
 
-  uavControl->autoFlyThreadStatue = false;
-  uavControl->isAutoFly = false;
-  uavControl->quit();
-  uavControl->wait();
+  uavControl.autoFlyThreadStatue = false;
+  uavControl.isAutoFly = false;
+  uavControl.quit();
+  uavControl.wait();
 
-  delete imageStitching;
-  delete uavControl;
-  imageStitching = NULL;
-  uavControl = NULL;
+//  delete imageStitching;
+//  delete uavControl;
+//  imageStitching = NULL;
+//  uavControl = NULL;
 
-  delete moveUav1;
-  delete moveUav2;
-  delete moveUav3;
+//  delete moveUav1;
+//  delete moveUav2;
+//  delete moveUav3;
 
-  moveUav1 = NULL;
-  moveUav2 = NULL;
-  moveUav3 = NULL;
+//  moveUav1 = NULL;
+//  moveUav2 = NULL;
+//  moveUav3 = NULL;
   QMainWindow::closeEvent(event);
-
 }
 
 /*****************************************************************************
@@ -209,6 +221,26 @@ void MainWindow::showNoMasterMessage() {
     close();
 }
 
+void MainWindow::deal_timeout()
+{
+  QString currentYaw[3];
+  if(uavControl.setYawOffset_ok)
+  {
+    currentYaw[0] = QString("%1").arg((uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180.0 / 3.1415926) ;
+    currentYaw[1] = QString("%1").arg((uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180.0 / 3.1415926) ;
+    currentYaw[2] = QString("%1").arg((uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180.0 / 3.1415926) ;
+  }
+  else
+  {
+    currentYaw[0] = QString("%1").arg(uavControl.currentYaw[1] * 180.0 / 3.1415926) ;
+    currentYaw[1] = QString("%1").arg(uavControl.currentYaw[2] * 180.0 / 3.1415926) ;
+    currentYaw[2] = QString("%1").arg(uavControl.currentYaw[3] * 180.0 / 3.1415926) ;
+  }
+  ui.yawOffset_uav1_lineEdit->setText(currentYaw[0]) ;
+  ui.yawOffset_uav2_lineEdit->setText(currentYaw[1]) ;
+  ui.yawOffset_uav3_lineEdit->setText(currentYaw[2]) ;
+//  std::cout << "this is deal_timeout" << std::endl;
+}
 
 void MainWindow::deal_showStitchingImageSignal(QImage image)
 {
@@ -223,9 +255,9 @@ void MainWindow::displayStitchingImage(const QImage image)
   stitchingImage_mutex_.unlock();
 
   //显示重合度
-  QString overlap =QString("%1").arg(imageStitching->overlap_rate_left) ;
+  QString overlap =QString("%1").arg(imageStitching.overlap_rate_left) ;
   ui.overlapRate_left_lineEdit->setText(overlap) ;
-  overlap =QString("%1").arg(imageStitching->overlap_rate_right) ;
+  overlap =QString("%1").arg(imageStitching.overlap_rate_right) ;
   ui.overlapRate_right_lineEdit->setText(overlap) ;
 }
 
@@ -238,6 +270,8 @@ void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horiz
   else if(UAVx == 3)
     uav3Node.cameraControl(vertical,horizontal);
 }
+
+// 待删除
 void MainWindow::deal_uav_FBcontrolSignal(double controlUav1, double controlUav3, double yawUav1, double yawUav3)
 {
   if(yawUav1 >= 0.02 || yawUav1 <= -0.02)
@@ -248,18 +282,26 @@ void MainWindow::deal_uav_FBcontrolSignal(double controlUav1, double controlUav3
   std::cout <<"controlUav1  " << controlUav1 << std::endl;
 //  uav3Node.cmd(uav3Control, 0, 0, 0);
 }
+
+// 控制无人机的移动
+void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav3TargetVelocity)
+{
+  if(uav1TargetVelocity.angular.z >= 0.02 || uav1TargetVelocity.angular.z <= -0.02)
+    uav1Node.cmd(0, 0, 0, uav1TargetVelocity.angular.z);
+  else
+    uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, 0, uav1TargetVelocity.angular.z);
+}
+
 void  MainWindow::deal_rosShutdown(int UAVx)
 {
   if(UAVx == 1)
   {
-    std::cout << "11111111" << std::endl;
-//    if(uav1Node.isRunning() == true)
-//    {
-////      uav1Node.st
-//      std::cout << "22222222222" << std::endl;
-//      uav1Node.quit();
-//      uav1Node.wait();
-//    }
+
+    if(uav1Node.isRunning())
+    {
+      uav1Node.quit();
+      uav1Node.wait();
+    }
     ui.uav1Land_pBtn->setEnabled(false);
     ui.uav1Takeoff_pBtn->setEnabled(false);
     ui.uav1Move_pBtn->setEnabled(false);
@@ -267,8 +309,11 @@ void  MainWindow::deal_rosShutdown(int UAVx)
   }
   else if(UAVx == 2)
   {
-    uav2Node.quit();
-    uav2Node.wait();
+    if(uav2Node.isRunning())
+    {
+      uav2Node.quit();
+      uav2Node.wait();
+    }
     ui.uav2Land_pBtn->setEnabled(false);
     ui.uav2Takeoff_pBtn->setEnabled(false);
     ui.uav2Move_pBtn->setEnabled(false);
@@ -276,15 +321,24 @@ void  MainWindow::deal_rosShutdown(int UAVx)
   }
   else if(UAVx == 3)
   {
-    uav3Node.quit();
-    uav3Node.wait();
+    if(uav3Node.isRunning())
+    {
+      uav3Node.quit();
+      uav3Node.wait();
+    }
     ui.uav3Land_pBtn->setEnabled(false);
     ui.uav3Takeoff_pBtn->setEnabled(false);
     ui.uav3Move_pBtn->setEnabled(false);
     ui.uav3Battery_pBar->setEnabled(false);
   }
-//  uavControl->quit();
-//  uavControl->wait();
+  if(uavControl.isRunning())
+  {
+    uavControl.autoFlyThreadStatue = false;
+    uavControl.quit();
+    uavControl.wait();
+    ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+  }
+
 }
 
 /* ******************************************************  无人机1 ******************************************************* */
@@ -298,12 +352,26 @@ void MainWindow::displayUav1Image(const QImage image)
   uav1Image_mutex_.unlock();
 
 }
+void MainWindow::deal_uav1RgbimageSignal(cv::Mat rgbimage)
+{
+  try
+  {
+      cvtColor(rgbimage, imageStitching.leftImage,CV_RGB2BGR);
+      imageStitching.leftImageRec_flag = true;
+      uav1Image = QImage(rgbimage.data,rgbimage.cols,rgbimage.rows,rgbimage.step[0], QImage::Format_RGB888);
+      displayUav1Image(uav1Image);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+      std::cout << "deal_uav1RgbimageSignal err " << std::endl;
+  }
+}
 
 void MainWindow::deal_showUav1ImageSignal(QImage image)
 {
-//  static int i=0;
-//  qDebug() << "deal_showUav1ImageSignal"<<i;
-//  i++;
+  static int i=0;
+  qDebug() << "deal_showUav1ImageSignal"<<i;
+  i++;
   displayUav1Image(image);
 }
 void MainWindow::deal_uav1batteryDataSignal(int batteryData, bool batteryState)
@@ -344,7 +412,8 @@ void MainWindow::on_uav1Connect_pBtn_clicked()
 
 void MainWindow::on_uav1Move_pBtn_clicked()
 {
-  moveUav1->show();
+  moveUav1.show();
+  moveUav1.move(1500,10);
 }
 
 void MainWindow::on_uav1ShowImage_pBtn_clicked()
@@ -388,6 +457,22 @@ void MainWindow::deal_showUav2ImageSignal(QImage image)
 //  i++;
   displayUav2Image(image);
 }
+
+void MainWindow::deal_uav2RgbimageSignal(cv::Mat rgbimage)
+{
+  try
+  {
+      cvtColor(rgbimage, imageStitching.middleImage,CV_RGB2BGR);
+      imageStitching.middleImageRec_flag = true;
+      uav2Image = QImage(rgbimage.data,rgbimage.cols,rgbimage.rows,rgbimage.step[0], QImage::Format_RGB888);
+      displayUav2Image(uav2Image);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+      std::cout << "deal_uav2RgbimageSignal error !!! " << std::endl;
+  }
+}
+
 void MainWindow::displayUav2Image(const QImage image)
 {
   uav2Image_mutex_.lock();
@@ -433,7 +518,9 @@ void MainWindow::on_uav2Connect_pBtn_clicked()
 
 void MainWindow::on_uav2Move_pBtn_clicked()
 {
-  moveUav2->show();
+  moveUav2.show();
+  moveUav2.move(1500,380);
+
 }
 
 void MainWindow::on_uav2ShowImage_pBtn_clicked()
@@ -472,6 +559,22 @@ void MainWindow::deal_showUav3ImageSignal(QImage image)
 
   displayUav3Image(image);
 }
+
+void MainWindow::deal_uav3RgbimageSignal(cv::Mat rgbimage)
+{
+  try
+  {
+      cvtColor(rgbimage, imageStitching.rightImage,CV_RGB2BGR);
+      imageStitching.rightImageRec_flag = true;
+      uav3Image = QImage(rgbimage.data,rgbimage.cols,rgbimage.rows,rgbimage.step[0], QImage::Format_RGB888);
+      displayUav3Image(uav3Image);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+      std::cout << "deal_uav3RgbimageSignal error !!! " << std::endl;
+  }
+}
+
 void MainWindow::displayUav3Image(const QImage image)
 {
   uav3Image_mutex_.lock();
@@ -518,7 +621,8 @@ void MainWindow::on_uav3Connect_pBtn_clicked()
 
 void MainWindow::on_uav3Move_pBtn_clicked()
 {
-  moveUav3->show();
+  moveUav3.show();
+  moveUav3.move(1500,720);
 }
 
 void MainWindow::on_uav3ShowImage_pBtn_clicked()
@@ -628,40 +732,61 @@ void MainWindow::on_stitching_checkBox_stateChanged(int arg1)
 {
     if(ui.stitching_checkBox->isChecked() == true)
     {
-      imageStitching->isStitching = true;
+      imageStitching.isStitching = true;
     }
     else
     {
-      imageStitching->isStitching = false;
+      imageStitching.isStitching = false;
     }
 }
 // 自动飞行
 void MainWindow::on_autoFly_pBtn_clicked()
 {
-  if(uavControl->isAutoFly == false)
+  if(uavControl.isAutoFly == false)
   {
-//    uavControl->autoFlyThreadStatue = true;
-    uavControl->isAutoFly = true;
+
+    uavControl.isAutoFly = true;
     ui.autoFly_pBtn->setText(QString::fromUtf8("切换手动模式"));
-//    uavControl->start();
+    if(uavControl.isFinished())
+    {
+      uavControl.autoFlyThreadStatue = true;
+      uavControl.start();
+    }
   }
-  else {
-//    uavControl->autoFlyThreadStatue = false;
-    uavControl->isAutoFly = false;
-    ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
-//    uavControl->quit();
-//    uavControl->wait();
+  else
+  {
+    uavControl.isAutoFly = false;
+    if(uavControl.isRunning())
+    {
+      uavControl.autoFlyThreadStatue = false;
+      uavControl.quit();
+      uavControl.wait();
+      ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+    }
+
   }
 }
 
 void MainWindow::on_setYawErr_pBtn_clicked()
 {
-  uavControl->yawOffset[1] = ui.yawOffset_uav1_lineEdit->text().toDouble() * 3.1415926 / 180.0;
-  uavControl->yawOffset[2] = ui.yawOffset_uav2_lineEdit->text().toDouble() * 3.1415926 / 180.0;
-  uavControl->yawOffset[3] = ui.yawOffset_uav3_lineEdit->text().toDouble() * 3.1415926 / 180.0;
-
-  uavControl->yawOffset_21 = uavControl->yawOffset[2] - uavControl->yawOffset[1];
-
+  if(!uavControl.setYawOffset_ok)
+  {
+    uavControl.yawOffset[1] = ui.yawOffset_uav1_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+    uavControl.yawOffset[2] = ui.yawOffset_uav2_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+    uavControl.yawOffset[3] = ui.yawOffset_uav3_lineEdit->text().toDouble() * 3.1415926 / 180.0;
+    uavControl.yawOffset_21 = uavControl.yawOffset[2] - uavControl.yawOffset[1];
+//    uavControl.yawOffset_23 = uavControl.yawOffset[2] - uavControl.yawOffset[3];
+    ui.setYawErr_pBtn->setText(QString::fromUtf8("已设定"));
+//    ui.setYawErr_pBtn->setStyleSheet("color:rgb(255,0,0)");
+//    背景色可以用函数setStyleSheet("background: rgb(0,255,0));
+    uavControl.setYawOffset_ok = true;
+  }
+  else
+  {
+    ui.setYawErr_pBtn->setText(QString::fromUtf8("设定YAW偏差"));
+//    ui.setYawErr_pBtn->setStyleSheet("color:rgb(0, 255, 0)");
+    uavControl.setYawOffset_ok = false;
+  }
 }
 
 }  // namespace image_stitching

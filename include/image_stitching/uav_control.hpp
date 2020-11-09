@@ -4,6 +4,7 @@
 #ifndef Q_MOC_RUN
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Twist.h>
 #include <tf/tf.h>
 #endif
 
@@ -38,21 +39,50 @@ public:
   bool isAutoFly;
   bool autoFlyThreadStatue;
 
+  double PI;
+
+  struct PID
+  {
+      double kp;
+      double ki;
+      double kd;
+
+      double out;
+      double outMax;
+      double outMin;
+
+      double error;
+      double error_last;
+      double dt;
+  };
+  struct uavPID
+  {
+    PID x;
+    PID y;
+    PID z;
+    PID yaw;
+  };
+
+  uavPID uav1pid,uav3pid;
+
+   //GPS  0 元素不使用 从1开始
   double a_bit;
   double b_bit;
   double e2_bit;
-  double PI_bit;
   int gpsReceiveCnt;
   double start_point_lat , start_point_lon;
-
-  //GPS  0 元素不使用 从1开始
   double gps_yz[4][2];
   bool gps_status[4];
 
+  // odom 控制
   geometry_msgs::Point currentPosition[4];
   double currentYaw[4];
-  double yawOffset[4];
+  double yawOffset[4];  // 与正北方向的偏差
   double yawOffset_21,yawOffset_23;
+  double y_Offset_21,y_Offset_23;
+  bool setYawOffset_ok; //标记是否已经校准yaw
+
+  geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
 
   double targetOverlap_left,targetOverlap_right;
   double currentOverlap_left,currentOverlap_right;
@@ -84,6 +114,7 @@ Q_SIGNALS://Qt信号
   void turnRightSignal(int,bool);
 
   void uav_FBcontrolSignal(double, double, double, double);
+  void uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist);
 
 
 private:
