@@ -75,7 +75,7 @@ public:
   double gps_yz[4][2];
   bool gps_status[4];
 
-  // odom 控制
+  // odom 控制   uav1 -- 1   uav2 -- 2   uav3 -- 3 (数组的0元素不使用)
   geometry_msgs::Point currentPosition[4];
   geometry_msgs::Twist currentVelocity[4];
   geometry_msgs::Point lastPosition[4];
@@ -83,12 +83,15 @@ public:
   double currentYaw[4];
   double yawOffset[4];  // 与正北方向的偏差
   double yawOffset_21,yawOffset_23;
-  double y_Offset_21,y_Offset_23;
+  double y_Offset_21,y_Offset_23; //  当前位置偏差
+  double y_Offset_21_init, y_Offset_23_init;  //  初始位置偏差，用于计算global坐标系
   bool setYawOffset_ok; //标记是否已经校准yaw
   double delatT;
-
   geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
+  bool is_manualControl[4];
+  bool last_manualControl[4];
 
+  // 根据图像进行调整
   double targetOverlap_left,targetOverlap_right;
   double currentOverlap_left,currentOverlap_right;
   double overlap_upper,overlap_lower;
@@ -100,9 +103,7 @@ public:
   void uav_FBcontrol();
 
   void limiter(double *input, double max, double min);
-  //订阅回调函数
-//  void receiveImage_cb(const sensor_msgs::ImageConstPtr& msg);
-//  void receiveBatteryData_cb(const CommonCommonStateBatteryStateChanged::ConstPtr& msg);
+
 public Q_SLOTS:
   void deal_overlapRateSignal(double overlapRate_left,double overlapRate_right);
   void deal_uavgpsDataSignal(int UAVx, double latitude, double longitude);

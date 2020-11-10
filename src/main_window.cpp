@@ -251,30 +251,29 @@ void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horiz
     uav3Node.cameraControl(vertical,horizontal);
 }
 
-// 待删除
-void MainWindow::deal_uav_FBcontrolSignal(double controlUav1, double controlUav3, double yawUav1, double yawUav3)
-{
-  if(yawUav1 >= 0.02 || yawUav1 <= -0.02)
-    uav1Node.cmd(0, 0, 0, yawUav1);
-  else
-    uav1Node.cmd(controlUav1, 0, 0, yawUav1);
-
-  std::cout <<"controlUav1  " << controlUav1 << std::endl;
-//  uav3Node.cmd(uav3Control, 0, 0, 0);
-}
-
 // 控制无人机的移动
 void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav3TargetVelocity)
 {
-  if(uav1TargetVelocity.angular.z >= 0.02 || uav1TargetVelocity.angular.z <= -0.02)
-    uav1Node.cmd(0, 0, 0, uav1TargetVelocity.angular.z);
+  // UAV1
+  if(uavControl.is_manualControl[1] == true)
+     uav1Node.moveControl();
   else
-    uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, 0, uav1TargetVelocity.angular.z);
-
-  if(uav3TargetVelocity.angular.z >= 0.02 || uav3TargetVelocity.angular.z <= -0.02)
-    uav3Node.cmd(0, 0, 0, uav3TargetVelocity.angular.z);
+  {
+    if(uav1TargetVelocity.angular.z >= 0.02 || uav1TargetVelocity.angular.z <= -0.02)
+      uav1Node.cmd(0, 0, 0, uav1TargetVelocity.angular.z);
+    else
+      uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, 0, uav1TargetVelocity.angular.z);
+  }
+  // UAV3
+  if(uavControl.is_manualControl[3] == true)
+     uav3Node.moveControl();
   else
-    uav3Node.cmd(uav3TargetVelocity.linear.x, uav3TargetVelocity.linear.y, 0, uav3TargetVelocity.angular.z);
+  {
+    if(uav3TargetVelocity.angular.z >= 0.02 || uav3TargetVelocity.angular.z <= -0.02)
+      uav3Node.cmd(0, 0, 0, uav3TargetVelocity.angular.z);
+    else
+      uav3Node.cmd(uav3TargetVelocity.linear.x, uav3TargetVelocity.linear.y, 0, uav3TargetVelocity.angular.z);
+  }
 }
 
 void  MainWindow::deal_rosShutdown(int UAVx)
@@ -352,13 +351,6 @@ void MainWindow::deal_uav1RgbimageSignal(cv::Mat rgbimage)
   }
 }
 
-void MainWindow::deal_showUav1ImageSignal(QImage image)
-{
-  static int i=0;
-  qDebug() << "deal_showUav1ImageSignal"<<i;
-  i++;
-  displayUav1Image(image);
-}
 void MainWindow::deal_uav1batteryDataSignal(int batteryData, bool batteryState)
 {
   if(batteryState == false)
@@ -378,6 +370,15 @@ void MainWindow::on_uav1Takeoff_pBtn_clicked()
 void MainWindow::on_uav1Land_pBtn_clicked()
 {
   uav1Node.land();
+  // 关闭自动控制功能
+  uavControl.isAutoFly = false;
+  if(uavControl.isRunning())
+  {
+    uavControl.autoFlyThreadStatue = false;
+    uavControl.quit();
+    uavControl.wait();
+    ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+  }
 }
 
 void MainWindow::on_uav1Connect_pBtn_clicked()
@@ -388,7 +389,7 @@ void MainWindow::on_uav1Connect_pBtn_clicked()
 
   std::string str = "gnome-terminal --window -e 'bash -c \"source /home/linux/work/driver/bebop_ws/devel/setup.bash; roslaunch bebop_driver "
                         + uav1Name
-                        +"_node.launch; exec bash\"'&"; //'";
+                        +"_node.launch; exec bash\"'"; //'";
   const char *command = str.c_str();
   system(command);
 #endif
@@ -430,14 +431,6 @@ void MainWindow::on_uav1ShowImage_pBtn_clicked()
 }
 
 /* *******************************************************  无人机2 ******************************************************* */
-
-void MainWindow::deal_showUav2ImageSignal(QImage image)
-{
-//  static int i=0;
-//  qDebug() << "deal_showUav1ImageSignal"<<i;
-//  i++;
-  displayUav2Image(image);
-}
 
 void MainWindow::deal_uav2RgbimageSignal(cv::Mat rgbimage)
 {
@@ -482,6 +475,15 @@ void MainWindow::on_uav2Takeoff_pBtn_clicked()
 void MainWindow::on_uav2Land_pBtn_clicked()
 {
   uav2Node.land();
+  // 关闭自动控制功能
+  uavControl.isAutoFly = false;
+  if(uavControl.isRunning())
+  {
+    uavControl.autoFlyThreadStatue = false;
+    uavControl.quit();
+    uavControl.wait();
+    ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+  }
 }
 
 void MainWindow::on_uav2Connect_pBtn_clicked()
@@ -535,12 +537,6 @@ void MainWindow::on_uav2ShowImage_pBtn_clicked()
 
 /* *******************************************************  无人机3 ******************************************************* */
 
-void MainWindow::deal_showUav3ImageSignal(QImage image)
-{
-
-  displayUav3Image(image);
-}
-
 void MainWindow::deal_uav3RgbimageSignal(cv::Mat rgbimage)
 {
   try
@@ -583,6 +579,14 @@ void MainWindow::on_uav3Takeoff_pBtn_clicked()
 void MainWindow::on_uav3Land_pBtn_clicked()
 {
   uav3Node.land();
+  uavControl.isAutoFly = false;
+  if(uavControl.isRunning())
+  {
+    uavControl.autoFlyThreadStatue = false;
+    uavControl.quit();
+    uavControl.wait();
+    ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+  }
 }
 
 void MainWindow::on_uav3Connect_pBtn_clicked()
@@ -636,6 +640,10 @@ void MainWindow::on_uav3ShowImage_pBtn_clicked()
 /* *******************************************************  控制无人机的移动 ******************************************************* */
 void MainWindow::deal_forwardSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.forward = state;
   else if(UAVx == 2)
@@ -645,6 +653,10 @@ void MainWindow::deal_forwardSignal(int UAVx, bool state)
 }
 void MainWindow::deal_backwardSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.backward = state;
   else if(UAVx == 2)
@@ -654,6 +666,10 @@ void MainWindow::deal_backwardSignal(int UAVx, bool state)
 }
 void MainWindow::deal_flayLeftSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.flayLeft = state;
   else if(UAVx == 2)
@@ -663,6 +679,10 @@ void MainWindow::deal_flayLeftSignal(int UAVx, bool state)
 }
 void MainWindow::deal_flayRightSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.flayRight = state;
   else if(UAVx == 2)
@@ -672,6 +692,10 @@ void MainWindow::deal_flayRightSignal(int UAVx, bool state)
 }
 void MainWindow::deal_flayUpSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.flayUp = state;
   else if(UAVx == 2)
@@ -681,6 +705,10 @@ void MainWindow::deal_flayUpSignal(int UAVx, bool state)
 }
 void MainWindow::deal_flayDownSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.flayDown = state;
   else if(UAVx == 2)
@@ -690,6 +718,10 @@ void MainWindow::deal_flayDownSignal(int UAVx, bool state)
 }
 void MainWindow::deal_turnLeftSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.turnLeft = state;
   else if(UAVx == 2)
@@ -699,6 +731,10 @@ void MainWindow::deal_turnLeftSignal(int UAVx, bool state)
 }
 void MainWindow::deal_turnRightSignal(int UAVx, bool state)
 {
+  if(state)
+    uavControl.is_manualControl[UAVx] = true;
+  else
+    uavControl.is_manualControl[UAVx] = false;
   if(UAVx == 1)
     uav1Node.turnRight = state;
   else if(UAVx == 2)
@@ -744,7 +780,6 @@ void MainWindow::on_autoFly_pBtn_clicked()
       uavControl.wait();
       ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
     }
-
   }
 }
 
@@ -765,8 +800,9 @@ void MainWindow::on_setYawErr_pBtn_clicked()
   else
   {
     ui.setYawErr_pBtn->setText(QString::fromUtf8("设定YAW偏差"));
-//    ui.setYawErr_pBtn->setStyleSheet("color:rgb(0, 255, 0)");
     uavControl.setYawOffset_ok = false;
+//    ui.setYawErr_pBtn->setStyleSheet("color:rgb(0, 255, 0)");
+
   }
 }
 

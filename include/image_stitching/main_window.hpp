@@ -62,6 +62,7 @@ public:
   std::string uav2Name;
   std::string uav3Name;
 
+
   /*用来保护一个对象、数据结构、代码段、使得它们在同一一时刻，只有一个线程有访问权限*/
   mutable QMutex uav1Image_mutex_;
   mutable QMutex uav2Image_mutex_;
@@ -80,15 +81,12 @@ public Q_SLOTS:
 	/******************************************
 	** Auto-connections (connectSlotsByName())
 	*******************************************/
-  // 接受图像槽函数
-  void deal_showUav1ImageSignal(QImage image);
-  void deal_showUav2ImageSignal(QImage image);
-  void deal_showUav3ImageSignal(QImage image);
+
   // 接受电池电量信息槽函数
   void deal_uav1batteryDataSignal(int batteryData, bool batteryState);
   void deal_uav2batteryDataSignal(int batteryData, bool batteryState);
   void deal_uav3batteryDataSignal(int batteryData, bool batteryState);
-
+  // 接受图像槽函数
   void deal_uav1RgbimageSignal(cv::Mat rgbimage);
   void deal_uav2RgbimageSignal(cv::Mat rgbimage);
   void deal_uav3RgbimageSignal(cv::Mat rgbimage);
@@ -109,7 +107,6 @@ public Q_SLOTS:
   void deal_turnRightSignal(int UAVx, bool state);
 
   void deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav3TargetVelocity);
-  void deal_uav_FBcontrolSignal(double controlUav1, double controlUav3, double yawUav1, double yawUav3);
   void deal_cameraControSignal(int UAVx, double vertical, double horizontal);
 
   void deal_rosShutdown(int UAVx);
