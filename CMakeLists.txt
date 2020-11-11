@@ -61,12 +61,12 @@ QT4_WRAP_CPP(QT_MOC_HPP ${QT_MOC})
 ##############################################################################
 
 file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS src/*.cpp)
-
+file(GLOB_RECURSE KCF_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS src/kcf/*.cpp)
 ##############################################################################
 # Binaries
 ##############################################################################
 
-add_executable(image_stitching ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
+add_executable(image_stitching ${QT_SOURCES} ${KCF_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
 target_link_libraries(image_stitching ${QT_LIBRARIES} ${catkin_LIBRARIES})
 install(TARGETS image_stitching RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 

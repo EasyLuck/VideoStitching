@@ -44,8 +44,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   , moveUav1(1,parent)
   , moveUav2(2,parent)
   , moveUav3(3,parent)
-  , imageStitching()
-  , uavControl()
+  , imageStitching(parent)
+  , uavControl(parent)
+  , trackerThread(parent)
+//  , trackerWindow(parent)
 {
 	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 
@@ -127,7 +129,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)),this,SLOT(deal_uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)));
-
+  // KCF追踪
+//  QObject::connect(this,SIGNAL(trackerImageSignal(QImage)),this,SLOT(deal_trackerImageSignal(QImage)));
+  QObject::connect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
+  QObject::connect(ui.graphicsView,SIGNAL(mousePress_signal(QPoint)), this, SLOT(deal_mousePress_signal(QPoint)));
+  QObject::connect(ui.graphicsView,SIGNAL(mouseRelease_signal(QPoint)), this, SLOT(deal_mouseRelease_signal(QPoint)));
 
     uav1Name = "bebop3";//默认值
     ui.uav1Land_pBtn->setEnabled(false);
@@ -159,6 +165,29 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ui.uav2Image_label->setPixmap(QPixmap(":/images/load.png"));
     ui.uav3Image_label->setPixmap(QPixmap(":/images/load.png"));
     ui.school_label->setPixmap(QPixmap(":/images/school.png"));
+
+    ui.graphicsView->setStyleSheet("background: transparent");
+    // 关闭滑动条
+    ui.graphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui.graphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    scene = new QGraphicsScene(this);
+    // 重置坐标系原点为左上角
+    scene->setSceneRect(0,0,ui.graphicsView->width()-1,ui.graphicsView->height()-1);
+
+    RectItem = new QGraphicsRectItem();
+
+    QPen Polygonpen;
+    Polygonpen.setWidth(1);
+    Polygonpen.setColor(Qt::red);
+    RectItem->setPen(Polygonpen);
+    QBrush Polygon_Brush;
+    Polygon_Brush.setColor(QColor(177,177,177));
+    RectItem->setBrush(Polygon_Brush);
+    RectItem->setPos(0,0);
+    scene->addItem(RectItem);
+    ui.graphicsView->setScene(scene);
+    ui.graphicsView->show();
 }
 
 MainWindow::~MainWindow() {}
@@ -173,7 +202,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
   moveUav2.close();
   moveUav1.close();
   moveUav3.close();
-
+//  trackerWindow.close();
   /* 关闭图像拼接进程 */
   imageStitching.stitchingThreadStatue = false;
   imageStitching.isStitching = false;
@@ -330,7 +359,7 @@ void  MainWindow::deal_rosShutdown(int UAVx)
 void MainWindow::displayUav1Image(const QImage image)
 {
   uav1Image_mutex_.lock();
-  uav1Image = image.copy();
+//  uav1Image = image.copy();
   ui.uav1Image_label->setPixmap(QPixmap::fromImage(uav1Image));
 //  ui.uav1Image_label->resize(ui.uav1Image_label->pixmap()->size());
   uav1Image_mutex_.unlock();
@@ -340,7 +369,10 @@ void MainWindow::deal_uav1RgbimageSignal(cv::Mat rgbimage)
 {
   try
   {
-      cvtColor(rgbimage, imageStitching.leftImage,CV_RGB2BGR);
+//      cvtColor(rgbimage, imageStitching.leftImage,CV_RGB2BGR);
+
+//      rgbimage.copyTo(imageStitching.leftImage);// 深拷贝 完全复制一份
+      imageStitching.leftImage = rgbimage;        // 速度快 矩阵指针指向同一地址而实现 共享同一个矩阵
       imageStitching.leftImageRec_flag = true;
       uav1Image = QImage(rgbimage.data,rgbimage.cols,rgbimage.rows,rgbimage.step[0], QImage::Format_RGB888);
       displayUav1Image(uav1Image);
@@ -450,7 +482,6 @@ void MainWindow::deal_uav2RgbimageSignal(cv::Mat rgbimage)
 void MainWindow::displayUav2Image(const QImage image)
 {
   uav2Image_mutex_.lock();
-  uav2Image = image.copy();
   ui.uav2Image_label->setPixmap(QPixmap::fromImage(uav2Image));
 //  ui.uav2Image_label->resize(ui.uav2Image_label->pixmap()->size());
   uav2Image_mutex_.unlock();
@@ -555,7 +586,7 @@ void MainWindow::deal_uav3RgbimageSignal(cv::Mat rgbimage)
 void MainWindow::displayUav3Image(const QImage image)
 {
   uav3Image_mutex_.lock();
-  uav3Image = image.copy();
+//  uav3Image = image.copy();
   ui.uav3Image_label->setPixmap(QPixmap::fromImage(uav3Image));
 //  ui.uav3Image_label->resize(ui.uav3Image_label->pixmap()->size());
   uav3Image_mutex_.unlock();
@@ -805,8 +836,48 @@ void MainWindow::on_setYawErr_pBtn_clicked()
 
   }
 }
+void MainWindow::on_track_pBtn_clicked()
+{
+  // 清除框选
+  rect.setRect(0,0,1,1);
+  RectItem->setRect(rect);
+
+}
+
+void MainWindow::deal_mouseMove_signal(QPoint point)
+{
+  //  显示view下的坐标
+  ui.view_lineEdit->setText(QString("%1, %2").arg(point.x()).arg(point.x()));
+  QPointF pointScene=ui.graphicsView ->mapToScene(point);
+  ui.scene_lineEdit->setText(QString("%1, %2").arg(pointScene.x()).arg(pointScene.x()));
+
+  if(trackerThread.mousePress)
+  {
+     double err_x,err_y;
+     err_x = point.x() - trackerThread.mousePosition_start.x();
+     err_y = point.y() - trackerThread.mousePosition_start.y();
+     rect.setRect(trackerThread.mousePosition_start.x(),trackerThread.mousePosition_start.y(),err_x,err_y);
+
+    RectItem->setRect(rect);
+    trackerThread.mousePosition_current = point;
+  }
+}
+void MainWindow::deal_mousePress_signal(QPoint point)
+{
+  trackerThread.mousePosition_start = point;
+  trackerThread.mousePress = true;
+
+}
+void MainWindow::deal_mouseRelease_signal(QPoint point)
+{
+  trackerThread.mousePosition_current = point;
+  trackerThread.mousePress = false;
+
+}
 
 }  // namespace image_stitching
+
+
 
 
 

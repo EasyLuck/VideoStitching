@@ -10,7 +10,7 @@ namespace image_stitching{
 
 using namespace cv;
 using namespace std;
-stitching::stitching()
+stitching::stitching(QWidget *parent)
 {
   leftImageRec_flag = false;
   rightImageRec_flag = false;
@@ -366,7 +366,7 @@ void stitching::OptimizeSeam(cv::Mat& sourceImage, cv::Mat& transImage, cv::Mat&
                 }
                 else
                 {
-                    //img1中像素的权重，与当前处理点距重叠区域左边界的距离成正比，实验证明，这种方法确实好
+                    //img1中像素的权重，与当前处理点距重叠区域左边界的距离成正比
                     alpha = (overlapWidth - (j - overlap.left_top.x)) / overlapWidth;
                 }
 

@@ -73,7 +73,9 @@ void uav1::run()
     if(isRun == false) break;
 
     moveControl();
-//    cout << "1111111" << endl;
+
+//    cv::imshow("receiveImage",receiveImage);
+//    cv::waitKey(1);
 
     ros::spinOnce();
     loop_rate.sleep();
@@ -90,12 +92,9 @@ void uav1::receiveImage_cb(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8)->image;
+//        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8)->image;
+        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8)->image;
         Q_EMIT uav1RgbimageSignal(receiveImage);
-
-//        ImageToQImage = QImage(receiveImage.data,receiveImage.cols,receiveImage.rows,receiveImage.step[0], QImage::Format_RGB888);
-//        Q_EMIT showUav1ImageSignal(ImageToQImage);
-//        receiveImageFlag = true ;
     }
     catch (cv_bridge::Exception& e)
     {

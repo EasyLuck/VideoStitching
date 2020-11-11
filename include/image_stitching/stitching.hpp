@@ -30,7 +30,7 @@ class stitching : public QThread
 {
   Q_OBJECT
 public:
-  stitching();
+  explicit stitching(QWidget *parent = 0);
 
   std::ofstream ouputFile;
 
@@ -51,6 +51,7 @@ public:
 
   typedef struct
   {
+//    cv::Point2d
       cv::Point2f left_top;
       cv::Point2f left_bottom;
       cv::Point2f right_top;

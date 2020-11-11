@@ -19,11 +19,13 @@
 #include <QTimer>
 #include <QTime>
 
-
+#include <QGraphicsView>
+#include <QMouseEvent>
 #include "uav1_node.hpp"
 #include "uav2_node.hpp"
 #include "uav3_node.hpp"
 #include "moveuav_window.hpp"
+#include "kcf/trackerThread.hpp"
 #include "stitching.hpp"
 #include "uav_control.hpp"
 
@@ -50,6 +52,7 @@ public:
   moveUav moveUav3;
   stitching imageStitching;
   uav_control uavControl;
+  tracker_thread trackerThread;
 
   QTimer *MyTimer;
 
@@ -62,6 +65,9 @@ public:
   std::string uav2Name;
   std::string uav3Name;
 
+  QGraphicsScene  *scene;
+  QGraphicsRectItem *RectItem;   //多边形
+  QRectF rect; //（x，y）为左上角并具有给定width和height的矩形
 
   /*用来保护一个对象、数据结构、代码段、使得它们在同一一时刻，只有一个线程有访问权限*/
   mutable QMutex uav1Image_mutex_;
@@ -76,6 +82,9 @@ public:
   void displayUav2Image(const QImage image);
   void displayUav3Image(const QImage image);
   void displayStitchingImage(const QImage image);
+
+Q_SIGNALS:
+  void trackerImageSignal(QImage);
 
 public Q_SLOTS:
 	/******************************************
@@ -112,6 +121,11 @@ public Q_SLOTS:
   void deal_rosShutdown(int UAVx);
   void deal_timeout();
 
+  //  鼠标信号
+  void deal_mouseMove_signal(QPoint point);
+  void deal_mousePress_signal(QPoint point); //鼠标单击
+  void deal_mouseRelease_signal(QPoint point);
+
   void on_uav1Takeoff_pBtn_clicked();
   void on_uav1Land_pBtn_clicked();
   void on_uav1Connect_pBtn_clicked();
@@ -136,13 +150,14 @@ public Q_SLOTS:
 
   void on_setYawErr_pBtn_clicked();
 
-
+  void on_track_pBtn_clicked();
 
 private:
 	Ui::MainWindowDesign ui;
 
 protected:
 //  void paintEvent(QPaintEvent *);
+
 
 
 };

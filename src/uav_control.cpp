@@ -18,7 +18,8 @@ using namespace  std;
 ** Implementation
 *****************************************************************************/
 
-uav_control::uav_control(){
+uav_control::uav_control(QWidget *parent)
+{
   isAutoFly = false;
   autoFlyThreadStatue = true;
 
@@ -267,9 +268,9 @@ void uav_control::uav_LRcontrol()
 
   // 飞行命令发生变化 重新发送控制指令
   if(flayState_left[0] != flayState_left[1])
-    flayLeftSignal(1,flayState_left[0]);
+    Q_EMIT flayLeftSignal(1,flayState_left[0]);
   if(flayState_right[0] != flayState_right[1])
-    flayRightSignal(1,flayState_right[0]);
+    Q_EMIT flayRightSignal(1,flayState_right[0]);
 
   // 更新flayState_xx[1]
   flayState_left[1] = flayState_left[0];

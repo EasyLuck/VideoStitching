@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1313</width>
+    <width>1315</width>
     <height>836</height>
    </rect>
   </property>
@@ -1020,10 +1020,10 @@
    <widget class="QLabel" name="school_label">
     <property name="geometry">
      <rect>
-      <x>1080</x>
-      <y>620</y>
-      <width>170</width>
-      <height>170</height>
+      <x>1160</x>
+      <y>680</y>
+      <width>120</width>
+      <height>120</height>
      </rect>
     </property>
     <property name="text">
@@ -1157,6 +1157,112 @@
      </property>
     </widget>
    </widget>
+   <widget class="QPushButton" name="track_pBtn">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>610</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>AR PL UKai CN</family>
+      <pointsize>17</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>追踪</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_12">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>640</y>
+      <width>171</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <widget class="QLabel" name="label_16">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>20</y>
+       <width>81</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>AR PL UKai CN</family>
+       <pointsize>13</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>View坐标</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="view_lineEdit">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>21</y>
+       <width>91</width>
+       <height>25</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_17">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>49</y>
+       <width>81</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>AR PL UKai CN</family>
+       <pointsize>13</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>scene坐标</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="scene_lineEdit">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>50</y>
+       <width>91</width>
+       <height>25</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="myQGraphicsView" name="graphicsView">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>330</y>
+      <width>961</width>
+      <height>481</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: transparent</string>
+    </property>
+   </widget>
    <zorder>groupBox_10</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
@@ -1167,6 +1273,9 @@
    <zorder>autoFly_pBtn</zorder>
    <zorder>school_label</zorder>
    <zorder>groupBox_11</zorder>
+   <zorder>track_pBtn</zorder>
+   <zorder>groupBox_12</zorder>
+   <zorder>graphicsView</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">
@@ -1196,6 +1305,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>myQGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">../../src/image_stitching/include/image_stitching/myqgraphicsview.hpp</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

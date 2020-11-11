@@ -29,7 +29,7 @@ class uav_control : public QThread
 {
     Q_OBJECT
 public:
-  uav_control();
+  uav_control(QWidget *parent = 0);
   virtual ~uav_control();
 
   /* 用于控制拼接进程 */
