@@ -78,6 +78,7 @@ public Q_SLOTS:
 
 Q_SIGNALS://Qt信号
       void showStitchingImageSignal(QImage);
+      void trackStitchingImageSignal(cv::Mat image);
       void overlapRateSignal(double, double);
 
 };

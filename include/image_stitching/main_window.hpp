@@ -99,7 +99,9 @@ public Q_SLOTS:
   void deal_uav1RgbimageSignal(cv::Mat rgbimage);
   void deal_uav2RgbimageSignal(cv::Mat rgbimage);
   void deal_uav3RgbimageSignal(cv::Mat rgbimage);
-  void deal_showStitchingImageSignal(QImage image);
+//  void deal_showStitchingImageSignal(QImage image);
+  void deal_trackFinishSignal(bool trackStatue);
+
 
 //  void deal_uav3gpsDataSignal(double latitude, double longitude);
 //  void deal_uav3gpsDataSignal(double latitude, double longitude);

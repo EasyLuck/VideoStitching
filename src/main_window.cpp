@@ -77,12 +77,11 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
   QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
-
   QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),this,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
   QObject::connect(&uav2Node,SIGNAL(uav2RgbimageSignal(cv::Mat)),this,SLOT(deal_uav2RgbimageSignal(cv::Mat)));
   QObject::connect(&uav3Node,SIGNAL(uav3RgbimageSignal(cv::Mat)),this,SLOT(deal_uav3RgbimageSignal(cv::Mat)));
 
-  QObject::connect(&imageStitching,SIGNAL(showStitchingImageSignal(QImage)),this,SLOT(deal_showStitchingImageSignal(QImage)));
+//  QObject::connect(&imageStitching,SIGNAL(showStitchingImageSignal(QImage)),this,SLOT(deal_showStitchingImageSignal(QImage)));
   // 线程之间同步重合度
   QObject::connect(&imageStitching,SIGNAL(overlapRateSignal(double,double)),&uavControl,SLOT(deal_overlapRateSignal(double,double)));
 
@@ -134,6 +133,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
   QObject::connect(ui.graphicsView,SIGNAL(mousePress_signal(QPoint)), this, SLOT(deal_mousePress_signal(QPoint)));
   QObject::connect(ui.graphicsView,SIGNAL(mouseRelease_signal(QPoint)), this, SLOT(deal_mouseRelease_signal(QPoint)));
+  QObject::connect(&imageStitching,SIGNAL(trackStitchingImageSignal(cv::Mat)), &trackerThread, SLOT(deal_trackStitchingImageSignal(cv::Mat)));
+
+  QObject::connect(&trackerThread,SIGNAL(trackFinishSignal(bool)), this, SLOT(deal_trackFinishSignal(bool)));
 
     uav1Name = "bebop3";//默认值
     ui.uav1Land_pBtn->setEnabled(false);
@@ -156,7 +158,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     // 开启线程
     imageStitching.start();
     uavControl.start();
-
+    trackerThread.start();
     MyTimer->start(100);  //  100Ms定时器
 
     // 加载图片
@@ -215,6 +217,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
   uavControl.quit();
   uavControl.wait();
 
+  trackerThread.trackerThreadStatus = false;
+  trackerThread.quit();
+  trackerThread.wait();
   MyTimer->stop();
 
   QMainWindow::closeEvent(event);
@@ -251,22 +256,17 @@ void MainWindow::deal_timeout()
   ui.yawOffset_uav3_lineEdit->setText(currentYaw[2]) ;
 }
 
-void MainWindow::deal_showStitchingImageSignal(QImage image)
-{
-  displayStitchingImage(image);
-}
 void MainWindow::displayStitchingImage(const QImage image)
 {
   stitchingImage_mutex_.lock();
   stitchingImage = image.copy();
   ui.stitchingImage_label->setPixmap(QPixmap::fromImage(stitchingImage));
-//  ui.uav1Image_label->resize(ui.uav1Image_label->pixmap()->size());
   stitchingImage_mutex_.unlock();
 
   //显示重合度
-  QString overlap =QString("%1").arg(imageStitching.overlap_rate_left) ;
+  QString overlap = QString::number(imageStitching.overlap_rate_left, 'g', 2);
   ui.overlapRate_left_lineEdit->setText(overlap) ;
-  overlap =QString("%1").arg(imageStitching.overlap_rate_right) ;
+  overlap = QString::number(imageStitching.overlap_rate_right, 'g', 2);
   ui.overlapRate_right_lineEdit->setText(overlap) ;
 }
 
@@ -369,10 +369,10 @@ void MainWindow::deal_uav1RgbimageSignal(cv::Mat rgbimage)
 {
   try
   {
-//      cvtColor(rgbimage, imageStitching.leftImage,CV_RGB2BGR);
+      cvtColor(rgbimage, imageStitching.leftImage,CV_RGB2BGR);
 
 //      rgbimage.copyTo(imageStitching.leftImage);// 深拷贝 完全复制一份
-      imageStitching.leftImage = rgbimage;        // 速度快 矩阵指针指向同一地址而实现 共享同一个矩阵
+//      imageStitching.leftImage = rgbimage;        // 速度快 矩阵指针指向同一地址而实现 共享同一个矩阵
       imageStitching.leftImageRec_flag = true;
       uav1Image = QImage(rgbimage.data,rgbimage.cols,rgbimage.rows,rgbimage.step[0], QImage::Format_RGB888);
       displayUav1Image(uav1Image);
@@ -838,19 +838,48 @@ void MainWindow::on_setYawErr_pBtn_clicked()
 }
 void MainWindow::on_track_pBtn_clicked()
 {
-  // 清除框选
-  rect.setRect(0,0,1,1);
-  RectItem->setRect(rect);
+  if(trackerThread.is_tracking == false)
+  {
+    if(trackerThread.trackRoi.width <= 1 || trackerThread.trackRoi.height <= 1)
+    {
+      QMessageBox::warning(NULL , QString::fromUtf8("提示"), QString::fromUtf8("选择区域太小!  "));
+      return;
+    }
+    // 清除框选
+    rect.setRect(0,0,1,1);
+    RectItem->setRect(rect);
+    trackerThread.is_tracking = true;
+    trackerThread.trackerInit_flag = false;
+    ui.track_pBtn->setText(QString::fromUtf8("停止"));
+    QObject::disconnect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
+    QObject::disconnect(ui.graphicsView,SIGNAL(mousePress_signal(QPoint)), this, SLOT(deal_mousePress_signal(QPoint)));
+    QObject::disconnect(ui.graphicsView,SIGNAL(mouseRelease_signal(QPoint)), this, SLOT(deal_mouseRelease_signal(QPoint)));
 
+  }
+  else {
+    QObject::connect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
+    QObject::connect(ui.graphicsView,SIGNAL(mousePress_signal(QPoint)), this, SLOT(deal_mousePress_signal(QPoint)));
+    QObject::connect(ui.graphicsView,SIGNAL(mouseRelease_signal(QPoint)), this, SLOT(deal_mouseRelease_signal(QPoint)));
+    trackerThread.is_tracking = false;
+    trackerThread.trackRoi.width = 0;
+    trackerThread.trackRoi.height = 0;
+    ui.track_pBtn->setText(QString::fromUtf8("追踪"));
+
+  }
+
+}
+
+void MainWindow::deal_trackFinishSignal(bool trackStatue)
+{
+  displayStitchingImage(trackerThread.showImage);
 }
 
 void MainWindow::deal_mouseMove_signal(QPoint point)
 {
   //  显示view下的坐标
-  ui.view_lineEdit->setText(QString("%1, %2").arg(point.x()).arg(point.x()));
-  QPointF pointScene=ui.graphicsView ->mapToScene(point);
-  ui.scene_lineEdit->setText(QString("%1, %2").arg(pointScene.x()).arg(pointScene.x()));
-
+//  ui.view_lineEdit->setText(QString("%1, %2").arg(point.x()).arg(point.x()));
+//  QPointF pointScene=ui.graphicsView ->mapToScene(point);
+//  ui.scene_lineEdit->setText(QString("%1, %2").arg(pointScene.x()).arg(pointScene.x()));
   if(trackerThread.mousePress)
   {
      double err_x,err_y;
@@ -864,14 +893,19 @@ void MainWindow::deal_mouseMove_signal(QPoint point)
 }
 void MainWindow::deal_mousePress_signal(QPoint point)
 {
+
   trackerThread.mousePosition_start = point;
   trackerThread.mousePress = true;
 
+  trackerThread.trackRoi.x = point.x() * trackerThread.scale_x;
+  trackerThread.trackRoi.y = point.y() * trackerThread.scale_y;
 }
 void MainWindow::deal_mouseRelease_signal(QPoint point)
 {
   trackerThread.mousePosition_current = point;
   trackerThread.mousePress = false;
+  trackerThread.trackRoi.width = (point.x() - trackerThread.mousePosition_start.x()) * trackerThread.scale_x;
+  trackerThread.trackRoi.height = (point.y() - trackerThread.mousePosition_start.y()) * trackerThread.scale_y;
 
 }
 

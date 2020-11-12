@@ -95,7 +95,7 @@ void uav_control::run()
     else
     {
 //      std::cout << "this is autoFlyThread" << std::endl;
-      msleep(100);
+      msleep(200);
     }
   }
 }

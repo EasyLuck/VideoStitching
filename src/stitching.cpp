@@ -26,7 +26,7 @@ stitching::stitching(QWidget *parent)
 
 void stitching::run()
 {
-  ouputFile.open("../data/output.txt",ios::app);
+//  ouputFile.open("../data/output.txt",ios::app);
 
   while (stitchingThreadStatue) {
 
@@ -48,23 +48,25 @@ void stitching::run()
         rightImageRec_flag = false;
 
       stitchingImage = stitchingThreeImage(leftImage, middleImage,rightImage);
-      std::cout << "receive image ok " << std::endl;
-      try
-      {
-          cvtColor(stitchingImage, stitchingImage, CV_BGR2RGB);
-          QImage ImageToQImage = QImage(stitchingImage.data,stitchingImage.cols,stitchingImage.rows,stitchingImage.step[0],QImage::Format_RGB888);
-          Q_EMIT showStitchingImageSignal(ImageToQImage);
-          Q_EMIT overlapRateSignal(overlap_rate_left,overlap_rate_right);
+//      std::cout << "receive image ok " << std::endl;
+      Q_EMIT trackStitchingImageSignal(stitchingImage);
+//      try
+//      {
+//          cvtColor(stitchingImage, stitchingImage, CV_BGR2RGB);
+//          QImage ImageToQImage = QImage(stitchingImage.data,stitchingImage.cols,stitchingImage.rows,stitchingImage.step[0],QImage::Format_RGB888);
+//          Q_EMIT showStitchingImageSignal(ImageToQImage);
 
-          if(ouputFile.is_open())
-            ouputFile << overlap_rate_left << "\t" << overlap_rate_right << endl;
-          else
-            cout << "open file failure" << endl;
-      }
-      catch (...)
-      {
-        std::cout << " stitchingImage could not convert " << std::endl;
-      }
+//          Q_EMIT overlapRateSignal(overlap_rate_left,overlap_rate_right);
+
+//          if(ouputFile.is_open())
+//            ouputFile << overlap_rate_left << "\t" << overlap_rate_right << endl;
+//          else
+//            cout << "open file failure" << endl;
+//      }
+//      catch (...)
+//      {
+//        std::cout << " stitchingImage could not convert " << std::endl;
+//      }
       }
       stitching_mutex_.unlock();
     }
@@ -344,7 +346,7 @@ void stitching::OptimizeSeam(cv::Mat& sourceImage, cv::Mat& transImage, cv::Mat&
     overlap.right_bottom.y = MIN(MIN(source.y, trans.y), dst.rows);  // 限制必须小于 dst.rows
 
     double overlapWidth =overlap.right_bottom.x - overlap.left_top.x ;//重叠区域的宽度
-    cout << "overlapWidth " << overlapWidth << endl;
+//    cout << "overlapWidth " << overlapWidth << endl;
     double alpha = 1;//img1中像素的权重
     if(overlapWidth > 0)
     {

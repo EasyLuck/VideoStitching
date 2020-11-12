@@ -92,8 +92,8 @@ void uav1::receiveImage_cb(const sensor_msgs::ImageConstPtr& msg)
 {
     try
     {
-//        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8)->image;
-        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::BGR8)->image;
+        receiveImage = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::RGB8)->image;
+//        std::cout << "receiveImage szie " << receiveImage.rows << "  " << receiveImage.cols << std::endl;
         Q_EMIT uav1RgbimageSignal(receiveImage);
     }
     catch (cv_bridge::Exception& e)
