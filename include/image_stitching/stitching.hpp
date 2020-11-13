@@ -14,6 +14,7 @@
 #endif
 
 #include <iostream>
+#include <time.h>
 #include <fstream>
 #include <string>
 #include <QThread>

@@ -75,7 +75,7 @@ public:
   double gps_yz[4][2];
   bool gps_status[4];
 
-  // odom 控制   uav1 -- 1   uav2 -- 2   uav3 -- 3 (数组的0元素不使用)
+  // odom 控制   uav1 -- 1   uav2 -- 2   uav3 -- 3 (元素为4的数组，0元素不使用)
   geometry_msgs::Point currentPosition[4];
   geometry_msgs::Twist currentVelocity[4];
   geometry_msgs::Point lastPosition[4];
@@ -88,8 +88,9 @@ public:
   bool setYawOffset_ok; //标记是否已经校准yaw
   double delatT;
   geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
+
+  // 是否手动调整
   bool is_manualControl[4];
-  bool last_manualControl[4];
 
   // 根据图像进行调整
   double targetOverlap_left,targetOverlap_right;
@@ -97,8 +98,13 @@ public:
   double overlap_upper,overlap_lower;
   bool flayState_left[2],flayState_right[2];
   bool uav3flayState_left[2],uav3flayState_right[2];
+
+  bool isStitching;         //  是否启动图像拼接
+  bool is_imageControl[4];  //  是否正在根据拼接效果调整
+
+
   void run();
-  void gps_xyz(double lat2, double lon2, double *x_east, double *y_north, double start_point_lat_rad, double start_point_lon_rad);
+//  void gps_xyz(double lat2, double lon2, double *x_east, double *y_north, double start_point_lat_rad, double start_point_lon_rad);
   void uav_LRcontrol();
   void uav_FBcontrol();
 
@@ -106,7 +112,7 @@ public:
 
 public Q_SLOTS:
   void deal_overlapRateSignal(double overlapRate_left,double overlapRate_right);
-  void deal_uavgpsDataSignal(int UAVx, double latitude, double longitude);
+//  void deal_uavgpsDataSignal(int UAVx, double latitude, double longitude);
   void deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdom);  // 发送GPS信息
 
 Q_SIGNALS://Qt信号

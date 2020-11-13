@@ -64,17 +64,17 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 
   QObject::connect(&uav1Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav1Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav1batteryDataSignal(int,bool)));
-  QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+//  QObject::connect(&uav1Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
   QObject::connect(&uav1Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
   QObject::connect(&uav2Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav2Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav2batteryDataSignal(int,bool)));
-  QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+//  QObject::connect(&uav2Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
   QObject::connect(&uav2Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
   QObject::connect(&uav3Node, SIGNAL(rosShutdown(int)), this, SLOT(deal_rosShutdown(int)));
   QObject::connect(&uav3Node,SIGNAL(batteryDataSignal(int,bool)),this,SLOT(deal_uav3batteryDataSignal(int,bool)));
-  QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
+//  QObject::connect(&uav3Node,SIGNAL(gpsDataSignal(int,double,double)),&uavControl,SLOT(deal_uavgpsDataSignal(int,double,double)));
   QObject::connect(&uav3Node,SIGNAL(odomDataSignal(int,nav_msgs::Odometry)),&uavControl,SLOT(deal_uavodomDataSignal(int,nav_msgs::Odometry)));
 
   QObject::connect(&uav1Node,SIGNAL(uav1RgbimageSignal(cv::Mat)),this,SLOT(deal_uav1RgbimageSignal(cv::Mat)));
@@ -241,15 +241,15 @@ void MainWindow::deal_timeout()
   QString currentYaw[3];
   if(uavControl.setYawOffset_ok)
   {
-    currentYaw[0] = QString::number((uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180.0 / 3.1415926, 'g', 2);
-    currentYaw[1] = QString::number((uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180.0 / 3.1415926, 'g', 2);
-    currentYaw[2] = QString::number((uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180.0 / 3.1415926, 'g', 2);
+    currentYaw[0] = QString::number((uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180.0 / 3.1415926, 'g', 3);
+    currentYaw[1] = QString::number((uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180.0 / 3.1415926, 'g', 3);
+    currentYaw[2] = QString::number((uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180.0 / 3.1415926, 'g', 3);
   }
   else
   {
-    currentYaw[0] = QString::number(uavControl.currentYaw[1] * 180.0 / 3.1415926,'g',2);
-    currentYaw[1] = QString::number(uavControl.currentYaw[2] * 180.0 / 3.1415926,'g',2);
-    currentYaw[2] = QString::number(uavControl.currentYaw[3] * 180.0 / 3.1415926,'g',2);
+    currentYaw[0] = QString::number(uavControl.currentYaw[1] * 180.0 / 3.1415926,'g',3);
+    currentYaw[1] = QString::number(uavControl.currentYaw[2] * 180.0 / 3.1415926,'g',3);
+    currentYaw[2] = QString::number(uavControl.currentYaw[3] * 180.0 / 3.1415926,'g',3);
   }
   ui.yawOffset_uav1_lineEdit->setText(currentYaw[0]) ;
   ui.yawOffset_uav2_lineEdit->setText(currentYaw[1]) ;
@@ -264,9 +264,11 @@ void MainWindow::displayStitchingImage(const QImage image)
   stitchingImage_mutex_.unlock();
 
   //显示重合度
-  QString overlap = QString::number(imageStitching.overlap_rate_left, 'g', 2);
+  QString overlap = QString::number(imageStitching.overlap_rate_left, 'g', 3);
+  overlap = overlap + "%";
   ui.overlapRate_left_lineEdit->setText(overlap) ;
-  overlap = QString::number(imageStitching.overlap_rate_right, 'g', 2);
+  overlap = QString::number(imageStitching.overlap_rate_right, 'g', 3);
+  overlap = overlap + "%";
   ui.overlapRate_right_lineEdit->setText(overlap) ;
 }
 
@@ -418,10 +420,9 @@ void MainWindow::on_uav1Connect_pBtn_clicked()
   uav1Name = ui.uav1Name_cBox->currentText().toStdString();
 // window -e 'bash -c "roslaunch bebop_driver bebop_node.launch"'
 #if runCommand
-
   std::string str = "gnome-terminal --window -e 'bash -c \"source /home/linux/work/driver/bebop_ws/devel/setup.bash; roslaunch bebop_driver "
                         + uav1Name
-                        +"_node.launch; exec bash\"'"; //'";
+                        +"_node.launch; exec bash\"'&";
   const char *command = str.c_str();
   system(command);
 #endif
@@ -781,10 +782,12 @@ void MainWindow::on_stitching_checkBox_stateChanged(int arg1)
     if(ui.stitching_checkBox->isChecked() == true)
     {
       imageStitching.isStitching = true;
+      uavControl.isStitching = true;
     }
     else
     {
       imageStitching.isStitching = false;
+      uavControl.isStitching = false;
     }
 }
 // 自动飞行
@@ -792,7 +795,11 @@ void MainWindow::on_autoFly_pBtn_clicked()
 {
   if(uavControl.isAutoFly == false)
   {
-
+    if(uavControl.setYawOffset_ok == false)
+    {
+      QMessageBox::warning(NULL , QString::fromUtf8("提示"), QString::fromUtf8("请先设定YAW偏差！ "));
+      return;
+    }
     uavControl.isAutoFly = true;
     ui.autoFly_pBtn->setText(QString::fromUtf8("切换手动模式"));
     if(uavControl.isFinished())
@@ -822,7 +829,21 @@ void MainWindow::on_setYawErr_pBtn_clicked()
     uavControl.yawOffset[2] = uavControl.currentYaw[2];
     uavControl.yawOffset[3] = uavControl.currentYaw[3];
     uavControl.yawOffset_21 = uavControl.yawOffset[2] - uavControl.yawOffset[1];
+    if(abs(uavControl.yawOffset_21) > uavControl.PI)
+    {
+      if(uavControl.yawOffset_21 > 0)
+        uavControl.yawOffset_21 = uavControl.yawOffset_21 - 2*uavControl.PI;
+      if(uavControl.yawOffset_21 < 0)
+        uavControl.yawOffset_21 = uavControl.yawOffset_21 + 2*uavControl.PI;
+    }
     uavControl.yawOffset_23 = uavControl.yawOffset[2] - uavControl.yawOffset[3];
+    if(abs(uavControl.yawOffset_23) > uavControl.PI)
+    {
+      if(uavControl.yawOffset_23 > 0)
+        uavControl.yawOffset_23 = uavControl.yawOffset_23 - 2*uavControl.PI;
+      if(uavControl.yawOffset_23 < 0)
+        uavControl.yawOffset_23 = uavControl.yawOffset_23 + 2*uavControl.PI;
+    }
     ui.setYawErr_pBtn->setText(QString::fromUtf8("已设定"));
 //    ui.setYawErr_pBtn->setStyleSheet("color:rgb(255,0,0)");
 //    背景色可以用函数setStyleSheet("background: rgb(0,255,0));
@@ -836,13 +857,18 @@ void MainWindow::on_setYawErr_pBtn_clicked()
 
   }
 }
+void MainWindow::on_setOverlapRate_pBtn_clicked()
+{
+  uavControl.targetOverlap_left = ui.setOverlapRate_left_lineEdit->text().toDouble();
+  uavControl.targetOverlap_right = ui.setOverlapRate_right_lineEdit->text().toDouble();
+}
 void MainWindow::on_track_pBtn_clicked()
 {
   if(trackerThread.is_tracking == false)
   {
     if(trackerThread.trackRoi.width <= 1 || trackerThread.trackRoi.height <= 1)
     {
-      QMessageBox::warning(NULL , QString::fromUtf8("提示"), QString::fromUtf8("选择区域太小!  "));
+      QMessageBox::warning(NULL , QString::fromUtf8("提示"), QString::fromUtf8("选择区域太小！ "));
       return;
     }
     // 清除框选
@@ -850,7 +876,7 @@ void MainWindow::on_track_pBtn_clicked()
     RectItem->setRect(rect);
     trackerThread.is_tracking = true;
     trackerThread.trackerInit_flag = false;
-    ui.track_pBtn->setText(QString::fromUtf8("停止"));
+    ui.track_pBtn->setText(QString::fromUtf8("停止追踪"));
     QObject::disconnect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
     QObject::disconnect(ui.graphicsView,SIGNAL(mousePress_signal(QPoint)), this, SLOT(deal_mousePress_signal(QPoint)));
     QObject::disconnect(ui.graphicsView,SIGNAL(mouseRelease_signal(QPoint)), this, SLOT(deal_mouseRelease_signal(QPoint)));
@@ -863,7 +889,7 @@ void MainWindow::on_track_pBtn_clicked()
     trackerThread.is_tracking = false;
     trackerThread.trackRoi.width = 0;
     trackerThread.trackRoi.height = 0;
-    ui.track_pBtn->setText(QString::fromUtf8("追踪"));
+    ui.track_pBtn->setText(QString::fromUtf8("框选追踪"));
 
   }
 
@@ -910,6 +936,8 @@ void MainWindow::deal_mouseRelease_signal(QPoint point)
 }
 
 }  // namespace image_stitching
+
+
 
 
 

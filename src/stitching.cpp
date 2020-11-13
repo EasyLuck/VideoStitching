@@ -6,6 +6,7 @@
 #define myfIniThFAST      20      //检测fast角点阈值
 #define myfMinThFAST      8       //最低阈值
 
+#define svaeLog 0
 namespace image_stitching{
 
 using namespace cv;
@@ -18,15 +19,17 @@ stitching::stitching(QWidget *parent)
   isStitching = false;
   stitchingThreadStatue = true;
 
-
-
-//  start();
 }
 
 
 void stitching::run()
 {
-//  ouputFile.open("../data/output.txt",ios::app);
+  #if svaeLog
+  QDateTime current_date_time = QDateTime::currentDateTime();
+  QString current_date = current_date_time.toString("yyyy-MM-dd-hh_mm_ss");
+  string time = current_date.toStdString();
+  ouputFile.open("/home/linux/work/dataset/saveFile/qt-"+ time +".txt",ios::app);
+  #endif
 
   while (stitchingThreadStatue) {
 
@@ -48,40 +51,23 @@ void stitching::run()
         rightImageRec_flag = false;
 
       stitchingImage = stitchingThreeImage(leftImage, middleImage,rightImage);
-//      std::cout << "receive image ok " << std::endl;
       Q_EMIT trackStitchingImageSignal(stitchingImage);
-//      try
-//      {
-//          cvtColor(stitchingImage, stitchingImage, CV_BGR2RGB);
-//          QImage ImageToQImage = QImage(stitchingImage.data,stitchingImage.cols,stitchingImage.rows,stitchingImage.step[0],QImage::Format_RGB888);
-//          Q_EMIT showStitchingImageSignal(ImageToQImage);
 
-//          Q_EMIT overlapRateSignal(overlap_rate_left,overlap_rate_right);
-
-//          if(ouputFile.is_open())
-//            ouputFile << overlap_rate_left << "\t" << overlap_rate_right << endl;
-//          else
-//            cout << "open file failure" << endl;
-//      }
-//      catch (...)
-//      {
-//        std::cout << " stitchingImage could not convert " << std::endl;
-//      }
+      #if svaeLog
+      if(ouputFile.is_open())
+        ouputFile << overlap_rate_left << "\t" << overlap_rate_right << endl;
+      else
+        cout << "open file failure" << endl;
+      #endif
       }
       stitching_mutex_.unlock();
     }
     else
     {
-      if(ouputFile.is_open())
-        ouputFile.close();
-
 //      std::cout << "thread is running, isStitching = false " << std::endl;
       msleep(500);
     }
   }
-
-  if(ouputFile.is_open())
-    ouputFile.close();
 }
 
 void stitching::deal_uav1RgbimageSignal(cv::Mat image)
@@ -92,7 +78,7 @@ void stitching::deal_uav1RgbimageSignal(cv::Mat image)
     cvtColor(image, leftImage, CV_RGB2BGR);
     leftImageRec_flag = true;
     //唤醒拼接线程
-    imageRecOK.wakeAll();
+//    imageRecOK.wakeAll();
 //    std::cout << "cvtColor ok " << std::endl;
   }
   catch(...)
@@ -107,7 +93,7 @@ void stitching::deal_uav2RgbimageSignal(cv::Mat image)
   {
     cvtColor(image, middleImage, CV_RGB2BGR);
     middleImageRec_flag = true;
-    imageRecOK.wakeAll();
+//    imageRecOK.wakeAll();
   }
   catch(...)
   {
@@ -120,7 +106,7 @@ void stitching::deal_uav3RgbimageSignal(cv::Mat image)
   {
     cvtColor(image, rightImage, CV_RGB2BGR);
     rightImageRec_flag = true;
-    imageRecOK.wakeAll();
+//    imageRecOK.wakeAll();
   }
   catch(...)
   {

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1315</width>
-    <height>836</height>
+    <width>1293</width>
+    <height>845</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -36,7 +36,7 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>0</y>
       <width>431</width>
       <height>301</height>
@@ -268,6 +268,16 @@
       </item>
       <item>
        <property name="text">
+        <string>bebop6</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop7</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>bebop</string>
        </property>
       </item>
@@ -297,7 +307,7 @@
    <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
-      <x>450</x>
+      <x>430</x>
       <y>0</y>
       <width>431</width>
       <height>301</height>
@@ -476,6 +486,16 @@
       </item>
       <item>
        <property name="text">
+        <string>bebop6</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop7</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>bebop</string>
        </property>
       </item>
@@ -562,7 +582,7 @@
    <widget class="QLabel" name="stitchingImage_label">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>40</x>
       <y>330</y>
       <width>960</width>
       <height>480</height>
@@ -595,7 +615,7 @@
    <widget class="QCheckBox" name="stitching_checkBox">
     <property name="geometry">
      <rect>
-      <x>1050</x>
+      <x>1030</x>
       <y>320</y>
       <width>141</width>
       <height>31</height>
@@ -622,7 +642,7 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>40</x>
       <y>300</y>
       <width>101</width>
       <height>31</height>
@@ -643,7 +663,7 @@
    <widget class="QGroupBox" name="groupBox_5">
     <property name="geometry">
      <rect>
-      <x>880</x>
+      <x>860</x>
       <y>0</y>
       <width>431</width>
       <height>301</height>
@@ -822,6 +842,16 @@
       </item>
       <item>
        <property name="text">
+        <string>bebop6</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>bebop7</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>bebop</string>
        </property>
       </item>
@@ -908,8 +938,8 @@
    <widget class="QPushButton" name="autoFly_pBtn">
     <property name="geometry">
      <rect>
-      <x>1050</x>
-      <y>460</y>
+      <x>1030</x>
+      <y>440</y>
       <width>231</width>
       <height>41</height>
      </rect>
@@ -918,6 +948,8 @@
      <font>
       <family>AR PL UKai CN</family>
       <pointsize>22</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
      </font>
     </property>
     <property name="text">
@@ -927,10 +959,10 @@
    <widget class="QGroupBox" name="groupBox_10">
     <property name="geometry">
      <rect>
-      <x>1050</x>
+      <x>1030</x>
       <y>340</y>
       <width>231</width>
-      <height>121</height>
+      <height>101</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -965,7 +997,7 @@
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>25</y>
+       <y>26</y>
        <width>71</width>
        <height>31</height>
       </rect>
@@ -976,6 +1008,9 @@
        <pointsize>15</pointsize>
       </font>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
      <property name="readOnly">
       <bool>true</bool>
      </property>
@@ -984,7 +1019,7 @@
      <property name="geometry">
       <rect>
        <x>0</x>
-       <y>80</y>
+       <y>69</y>
        <width>151</width>
        <height>21</height>
       </rect>
@@ -1003,7 +1038,7 @@
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>75</y>
+       <y>65</y>
        <width>71</width>
        <height>31</height>
       </rect>
@@ -1014,6 +1049,9 @@
        <pointsize>15</pointsize>
       </font>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
      <property name="readOnly">
       <bool>true</bool>
      </property>
@@ -1022,10 +1060,10 @@
    <widget class="QLabel" name="school_label">
     <property name="geometry">
      <rect>
-      <x>1160</x>
-      <y>680</y>
-      <width>120</width>
-      <height>120</height>
+      <x>1170</x>
+      <y>710</y>
+      <width>90</width>
+      <height>90</height>
      </rect>
     </property>
     <property name="text">
@@ -1041,8 +1079,8 @@
    <widget class="QGroupBox" name="groupBox_11">
     <property name="geometry">
      <rect>
-      <x>1050</x>
-      <y>500</y>
+      <x>1030</x>
+      <y>475</y>
       <width>231</width>
       <height>101</height>
      </rect>
@@ -1078,6 +1116,12 @@
        <height>25</height>
       </rect>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
     </widget>
     <widget class="QLineEdit" name="yawOffset_uav2_lineEdit">
      <property name="geometry">
@@ -1088,6 +1132,12 @@
        <height>25</height>
       </rect>
      </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
     </widget>
     <widget class="QLineEdit" name="yawOffset_uav1_lineEdit">
      <property name="geometry">
@@ -1097,6 +1147,12 @@
        <width>71</width>
        <height>25</height>
       </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
     <widget class="QPushButton" name="setYawErr_pBtn">
@@ -1162,26 +1218,28 @@
    <widget class="QPushButton" name="track_pBtn">
     <property name="geometry">
      <rect>
-      <x>1050</x>
-      <y>610</y>
-      <width>101</width>
-      <height>31</height>
+      <x>1030</x>
+      <y>706</y>
+      <width>121</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>AR PL UKai CN</family>
-      <pointsize>17</pointsize>
+      <pointsize>19</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
      </font>
     </property>
     <property name="text">
-     <string>追踪</string>
+     <string>框选追踪</string>
     </property>
    </widget>
    <widget class="myQGraphicsView" name="graphicsView">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>40</x>
       <y>330</y>
       <width>960</width>
       <height>480</height>
@@ -1194,6 +1252,108 @@
      <string notr="true">background: transparent</string>
     </property>
    </widget>
+   <widget class="QGroupBox" name="groupBox_12">
+    <property name="geometry">
+     <rect>
+      <x>1030</x>
+      <y>580</y>
+      <width>231</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>AR PL UKai CN</family>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>       预期重合度</string>
+    </property>
+    <widget class="QLineEdit" name="setOverlapRate_left_lineEdit">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>91</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>60</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_16">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>30</y>
+       <width>41</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>AR PL UKai CN</family>
+       <pointsize>16</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>左侧</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="setOverlapRate_right_lineEdit">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>50</y>
+       <width>91</width>
+       <height>25</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>60</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_17">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>30</y>
+       <width>41</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>AR PL UKai CN</family>
+       <pointsize>16</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>右侧</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="setOverlapRate_pBtn">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>211</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>17</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>设定重合度</string>
+     </property>
+    </widget>
+   </widget>
+   <zorder>groupBox_11</zorder>
    <zorder>groupBox_10</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
@@ -1203,9 +1363,9 @@
    <zorder>groupBox_5</zorder>
    <zorder>autoFly_pBtn</zorder>
    <zorder>school_label</zorder>
-   <zorder>groupBox_11</zorder>
    <zorder>track_pBtn</zorder>
    <zorder>graphicsView</zorder>
+   <zorder>groupBox_12</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">

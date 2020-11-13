@@ -36,9 +36,10 @@ uav_control::uav_control(QWidget *parent)
   flayState_right[0] = false;
   flayState_right[1] = false;
 
-  a_bit = 6378137.0;
-  b_bit = 6356752.31414;
-  e2_bit = (pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit)*(pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit);
+//  a_bit = 6378137.0;
+//  b_bit = 6356752.31414;
+//  e2_bit = (pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit)*(pow((a_bit*a_bit-b_bit*b_bit),0.5)/a_bit);
+
   PI = 3.1415926;
 
   for (int i=0; i<4; i++)
@@ -46,8 +47,10 @@ uav_control::uav_control(QWidget *parent)
     currentYaw[i] = 0;
     yawOffset[i] = 0;
     is_manualControl[i] = false;
-    last_manualControl[i] = false;
+    is_imageControl[i] = false;
   }
+  isStitching = false;
+
   y_Offset_21_init = 1.5;
   y_Offset_23_init = -1.5;
   y_Offset_21 = y_Offset_21_init;
@@ -82,13 +85,15 @@ void uav_control::run()
     if(isAutoFly)
     {
       autoFly_mutex_.lock();
+      // 发送控制信号 （接受者在main_window.cpp)
+      uav_FBcontrol();
 
       // 控制左右
-//      uav_LRcontrol();
-//      if(gps_status[1] == true && gps_status[2] == true && gps_status[3] == true)
-      {
-        uav_FBcontrol();
-      }
+      if(isStitching)
+        uav_LRcontrol();
+
+      Q_EMIT uavTargetVelocitySignal(uav1TargetVelocity,uav3TargetVelocity);
+
       autoFly_mutex_.unlock();
       msleep(100);  // 10Hz
     }
@@ -110,9 +115,16 @@ void uav_control::deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdo
   // 当前位置
   currentPosition[UAVx] = currentOdom.pose.pose.position;
   if(UAVx == 1)
-    currentPosition[UAVx].y = currentPosition[UAVx].y + y_Offset_21_init;
+  {
+    currentPosition[UAVx].x = currentPosition[UAVx].x - y_Offset_21_init * sin(yawOffset[2]);
+    currentPosition[UAVx].y = currentPosition[UAVx].y + y_Offset_21_init * cos(yawOffset[2]);
+//    currentPosition[UAVx].y = currentPosition[UAVx].y + y_Offset_21_init;
+  }
   if(UAVx == 3)
-    currentPosition[UAVx].y = currentPosition[UAVx].y + y_Offset_23_init;
+  {
+    currentPosition[UAVx].x = currentPosition[UAVx].x - y_Offset_23_init * sin(yawOffset[2]);
+    currentPosition[UAVx].y = currentPosition[UAVx].y + y_Offset_23_init * cos(yawOffset[2]);
+  }
   // 当前偏航角  四元数 --> 欧拉角
   tf::Quaternion q;
   tf::quaternionMsgToTF(currentOdom.pose.pose.orientation, q);
@@ -121,6 +133,22 @@ void uav_control::deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdo
   currentYaw[UAVx] = yaw;
   // 当前速度
   currentVelocity[UAVx] = currentOdom.twist.twist;
+
+  if(is_manualControl[1] == true)
+  {
+    // 计算相对距离
+    y_Offset_21 = sqrt( (currentPosition[2].x - currentPosition[1].x) * (currentPosition[2].x - currentPosition[1].x)
+                      + (currentPosition[2].y - currentPosition[1].y) * (currentPosition[2].y - currentPosition[1].y));
+//    cout << "this is manualControl" << endl;
+  }
+
+  if(is_manualControl[3] == true)
+  {
+    // 计算相对距离
+    y_Offset_23 = - sqrt( (currentPosition[2].x - currentPosition[3].x) * (currentPosition[2].x - currentPosition[3].x)
+                        + (currentPosition[2].y - currentPosition[3].y) * (currentPosition[2].y - currentPosition[3].y));
+  }
+
 }
 
 /*
@@ -149,14 +177,15 @@ void uav_control::uav_FBcontrol()
   uav3pid.z.kp = 0.2;
   uav3pid.yaw.kp = 0.3;
 
-  if(is_manualControl[1] == true)
+
+  if(is_manualControl[1] == false)
   {
-    // 计算相对距离
-    y_Offset_21 = sqrt( (currentPosition[2].x - currentPosition[1].x) * (currentPosition[2].x - currentPosition[1].x)
-                      + (currentPosition[2].y - currentPosition[1].y) * (currentPosition[2].y - currentPosition[1].y));
-  }
-  else
-  {
+    if(is_imageControl[1] == true)
+    {
+      // 计算相对距离
+      y_Offset_21 = sqrt( (currentPosition[2].x - currentPosition[1].x) * (currentPosition[2].x - currentPosition[1].x)
+                        + (currentPosition[2].y - currentPosition[1].y) * (currentPosition[2].y - currentPosition[1].y));
+    }
     /* *************************** 计算 yaw 控制输出量 *************************** */
     uav1pid.yaw.error = currentYaw[2] - currentYaw[1] - yawOffset_21;
     if(abs(uav1pid.yaw.error) > PI)
@@ -184,14 +213,14 @@ void uav_control::uav_FBcontrol()
 
 
 
-  if(is_manualControl[3] == true)
+  if(is_manualControl[3] == false)
   {
-    // 计算相对距离
-    y_Offset_23 = - sqrt( (currentPosition[2].x - currentPosition[3].x) * (currentPosition[2].x - currentPosition[3].x)
-                        + (currentPosition[2].y - currentPosition[3].y) * (currentPosition[2].y - currentPosition[3].y));
-  }
-  else
-  {
+    if(is_imageControl[3] == true)
+    {
+      // 计算相对距离
+      y_Offset_23 = - sqrt( (currentPosition[2].x - currentPosition[3].x) * (currentPosition[2].x - currentPosition[3].x)
+                          + (currentPosition[2].y - currentPosition[3].y) * (currentPosition[2].y - currentPosition[3].y));
+    }
     /* *************************** 计算 yaw 控制输出量 *************************** */
     uav3pid.yaw.error = currentYaw[2] - currentYaw[3] - yawOffset_23;
     if(abs(uav3pid.yaw.error) > PI)
@@ -226,15 +255,12 @@ void uav_control::uav_FBcontrol()
   limiter(&uav3TargetVelocity.linear.z,0.2,-0.2);
   limiter(&uav3TargetVelocity.angular.z,0.2,-0.2);
 
-  // 发送控制信号 （接受者在main_window.cpp）
-  Q_EMIT uavTargetVelocitySignal(uav1TargetVelocity,uav3TargetVelocity);
-
   // 打印信息
-  cout << setprecision(6) << "currentPosition: ------------------------------------------" << currentPosition[1].x << "  "<< currentPosition[1].y << "  "<< currentPosition[3].x << "  "<< currentPosition[3].y<< endl;
+  cout << setprecision(6) << "currentPosition: ------------------------------------------  " << currentPosition[1].x << "  "<< currentPosition[1].y << "  "<< currentPosition[3].x << "  "<< currentPosition[3].y<< endl;
 //  cout << setprecision(6) << "           out : " << uav1TargetVelocity.linear.x << "   "<< uav1TargetVelocity.linear.y
 //                                                 << "  " << uav3TargetVelocity.linear.x << "   "<< uav3TargetVelocity.linear.y<< endl;
 
-  cout << setprecision(6) << "targetPosition : ------------------- " << currentPosition[2].y << " " << currentPosition[2].y + y_Offset_23 * cos(currentYaw[2]) << endl;
+  cout << setprecision(6) << "targetPosition : -------------------  " << currentPosition[2].x - y_Offset_21 * sin(currentYaw[2]) << " " << currentPosition[2].y + y_Offset_21 * cos(currentYaw[2]) << endl;
   cout << setprecision(6) << "   y_Offset_2x : " << y_Offset_21 << "   "<< y_Offset_23 << endl;
 
 }
@@ -251,62 +277,73 @@ void uav_control::uav_LRcontrol()
   if(currentOverlap_left > targetOverlap_left + overlap_upper)
   {
     // 左飞
-    flayState_left[0] = true;
-    flayState_right[0] = false;
+//    flayState_left[0] = true;
+//    flayState_right[0] = false;
+    is_imageControl[1] = true;  //  无人机1正在根据图像调整
+    uav1TargetVelocity.linear.y = 0.2;
+
   }
   else if(currentOverlap_left < targetOverlap_left + overlap_lower)
   {
     // 右飞
-    flayState_right[0] = true;
-    flayState_left[0] = false;
+//    flayState_right[0] = true;
+//    flayState_left[0] = false;
+    is_imageControl[1] = true;  //  无人机1正在根据图像调整
+    uav1TargetVelocity.linear.y = -0.2;
   }
   else
   {
-    flayState_left[0] = false;
-    flayState_right[0] = false;
+//    flayState_left[0] = false;
+//    flayState_right[0] = false;
+    is_imageControl[1] = false;  //  无人机1 停止根据图像调整位置
   }
 
   // 飞行命令发生变化 重新发送控制指令
-  if(flayState_left[0] != flayState_left[1])
-    Q_EMIT flayLeftSignal(1,flayState_left[0]);
-  if(flayState_right[0] != flayState_right[1])
-    Q_EMIT flayRightSignal(1,flayState_right[0]);
+//  if(flayState_left[0] != flayState_left[1])
+//    Q_EMIT flayLeftSignal(1,flayState_left[0]);
+//  if(flayState_right[0] != flayState_right[1])
+//    Q_EMIT flayRightSignal(1,flayState_right[0]);
 
   // 更新flayState_xx[1]
-  flayState_left[1] = flayState_left[0];
-  flayState_right[1] = flayState_right[0];
+//  flayState_left[1] = flayState_left[0];
+//  flayState_right[1] = flayState_right[0];
 
   // ****************uav3****************
   if(currentOverlap_right > targetOverlap_right + overlap_upper)
   {
-    // 左飞
-    uav3flayState_left[0] = false;
-    uav3flayState_right[0] = true;
+    // 右飞
+//    uav3flayState_left[0] = false;
+//    uav3flayState_right[0] = true;
+    is_imageControl[3] = true;  //  无人机3正在根据图像调整
+    uav3TargetVelocity.linear.y = -0.2;
   }
   else if(currentOverlap_right < targetOverlap_right + overlap_lower)
   {
-    // 右飞
-    uav3flayState_right[0] = false;
-    uav3flayState_left[0] = true;
+    // 左飞
+//    uav3flayState_right[0] = false;
+//    uav3flayState_left[0] = true;
+    is_imageControl[3] = true;  //  无人机3正在根据图像调整
+    uav3TargetVelocity.linear.y = 0.2;
   }
   else
   {
-    uav3flayState_left[0] = false;
-    uav3flayState_right[0] = false;
+//    uav3flayState_left[0] = false;
+//    uav3flayState_right[0] = false;
+    is_imageControl[3] = false;  //  无人机3 停止根据图像调整位置
   }
 
   // 飞行命令发生变化 重新发送控制指令
-  if(uav3flayState_left[0] != uav3flayState_left[1])
-    flayLeftSignal(1,uav3flayState_left[0]);
-  if(uav3flayState_right[0] != uav3flayState_right[1])
-    flayRightSignal(1,uav3flayState_right[0]);
+//  if(uav3flayState_left[0] != uav3flayState_left[1])
+//    Q_EMIT flayLeftSignal(3,uav3flayState_left[0]);
+//  if(uav3flayState_right[0] != uav3flayState_right[1])
+//    Q_EMIT flayRightSignal(3,uav3flayState_right[0]);
 
   // 更新flayState_xx[1]
-  uav3flayState_left[1] = uav3flayState_left[0];
-  uav3flayState_right[1] = uav3flayState_right[0];
+//  uav3flayState_left[1] = uav3flayState_left[0];
+//  uav3flayState_right[1] = uav3flayState_right[0];
 }
 
-
+/*
 void uav_control::deal_uavgpsDataSignal(int UAVx, double latitude, double longitude)
 {
   if(latitude == 0)// GPS有错误
@@ -362,5 +399,5 @@ void uav_control::gps_xyz(double lat2, double lon2, double *x_east, double *y_no
     *y_north = dX;
     // cout << "x_east y_north  " << dZ << "  " << dX << endl;
 }
-
+*/
 }  // namespace image_stitching

@@ -154,6 +154,7 @@ public Q_SLOTS:
 
   void on_track_pBtn_clicked();
 
+  void on_setOverlapRate_pBtn_clicked();
 private:
 	Ui::MainWindowDesign ui;
 

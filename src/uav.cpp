@@ -62,16 +62,14 @@ double uav::xControl()
 
 void uav::moveControl()
 {
-//  pidout = xControl();
-
   if(forward == true)   //前进
-    cmd(0.15, 0, 0, 0);
+    cmd(0.1, 0, 0, 0);
   if(backward == true)  //后退
-    cmd(-0.15, 0, 0, 0);
+    cmd(-0.1, 0, 0, 0);
   if(flayLeft == true)  //左飞
-    cmd(0, 0.15, 0, 0);
+    cmd(0, 0.1, 0, 0);
   if(flayRight == true) //右飞
-    cmd(0, -0.15, 0, 0);
+    cmd(0, -0.1, 0, 0);
   if(flayUp == true)    //上升
     cmd(0, 0, 0.15, 0);
   if(flayDown == true)  //下降
@@ -83,7 +81,7 @@ void uav::moveControl()
 
   if(!forward && !backward && !flayLeft && !flayRight && !flayUp && !flayDown && !turnLeft && !turnRight )
   {
-//    cout << "                            pidout " << pidout <<endl;
+//    cout << "   pidout " << pidout <<endl;
 //    cmd(0, 0, 0, 0);
   }
 }
