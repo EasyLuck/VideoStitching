@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1293</width>
-    <height>845</height>
+    <height>856</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -1219,7 +1219,7 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>706</y>
+      <y>700</y>
       <width>121</width>
       <height>41</height>
      </rect>
@@ -1280,7 +1280,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>60</string>
+      <string>70</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_16">
@@ -1312,7 +1312,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>60</string>
+      <string>70</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_17">
@@ -1353,6 +1353,25 @@
      </property>
     </widget>
    </widget>
+   <widget class="QPushButton" name="takeoff_pBtn">
+    <property name="geometry">
+     <rect>
+      <x>1030</x>
+      <y>750</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>AR PL UKai CN</family>
+      <pointsize>19</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>一键起飞</string>
+    </property>
+   </widget>
    <zorder>groupBox_11</zorder>
    <zorder>groupBox_10</zorder>
    <zorder>groupBox</zorder>
@@ -1366,6 +1385,7 @@
    <zorder>track_pBtn</zorder>
    <zorder>graphicsView</zorder>
    <zorder>groupBox_12</zorder>
+   <zorder>takeoff_pBtn</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">

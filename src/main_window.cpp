@@ -47,12 +47,13 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   , imageStitching(parent)
   , uavControl(parent)
   , trackerThread(parent)
+  , uavShow(parent)
 //  , trackerWindow(parent)
 {
 	ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 
   MyTimer = new QTimer(this);
-
+  uavShow.show();
   // 提示 connot queue arguments of type 'xxx'
   qRegisterMetaType< cv::Mat >("cv::Mat");
   qRegisterMetaType< nav_msgs::Odometry >("nav_msgs::Odometry");
@@ -154,6 +155,8 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     ui.uav3Takeoff_pBtn->setEnabled(false);
     ui.uav3Move_pBtn->setEnabled(false);
     ui.uav3Battery_pBar->setEnabled(false);
+    // 记录是否已经起飞
+    takeoff_flag = false;
 
     // 开启线程
     imageStitching.start();
@@ -204,6 +207,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
   moveUav2.close();
   moveUav1.close();
   moveUav3.close();
+
+  uavShow.close();
 //  trackerWindow.close();
   /* 关闭图像拼接进程 */
   imageStitching.stitchingThreadStatue = false;
@@ -254,6 +259,62 @@ void MainWindow::deal_timeout()
   ui.yawOffset_uav1_lineEdit->setText(currentYaw[0]) ;
   ui.yawOffset_uav2_lineEdit->setText(currentYaw[1]) ;
   ui.yawOffset_uav3_lineEdit->setText(currentYaw[2]) ;
+
+  // 仿真模拟界面
+  Eigen::Matrix<double, 2, 3> uavPosition_global,uavPosition_body;
+  Eigen::Matrix<double, 2, 2> uav_R;
+  double offset;
+  uavShow.uav1PolygonItem->setRotation(-(uavControl.currentYaw[1] - uavControl.yawOffset[1]) * 180 / uavControl.PI + 90);
+  uavShow.uav2PolygonItem->setRotation(-(uavControl.currentYaw[2] - uavControl.yawOffset[2]) * 180 / uavControl.PI + 90);
+  uavShow.uav3PolygonItem->setRotation(-(uavControl.currentYaw[3] - uavControl.yawOffset[3]) * 180 / uavControl.PI + 90);
+
+  uavPosition_global << uavControl.currentPosition[1].x , uavControl.currentPosition[2].x , uavControl.currentPosition[3].x ,
+                        uavControl.currentPosition[1].y , uavControl.currentPosition[2].y , uavControl.currentPosition[3].y;
+
+
+  uav_R << cos(uavControl.yawOffset[2]), sin(uavControl.yawOffset[2]), -sin(uavControl.yawOffset[2]), cos(uavControl.yawOffset[2]);
+  uavPosition_body = uav_R * uavPosition_global;
+
+  uavShow.uav1PolygonItem->setPos(uavPosition_body(0,0)*50, -uavPosition_body(1,0)*50);
+  uavShow.uav2PolygonItem->setPos(uavPosition_body(0,1)*50, -uavPosition_body(1,1)*50);
+  uavShow.uav3PolygonItem->setPos(uavPosition_body(0,2)*50, -uavPosition_body(1,2)*50);
+
+
+  QString  qstr;
+  qstr = QString::number(uavPosition_body(0,0),'g',3) + " , " + QString::number(uavPosition_body(1,0),'g',3);
+  uavShow.uav1PositionTextItem->setText(qstr);
+  qstr = QString::number(uavPosition_body(0,1),'g',3) + " , " + QString::number(uavPosition_body(1,1),'g',3);
+  uavShow.uav2PositionTextItem->setText(qstr);
+  qstr = QString::number(uavPosition_body(0,2),'g',3) + " , " + QString::number(uavPosition_body(1,2),'g',3);
+  uavShow.uav3PositionTextItem->setText(qstr);
+
+  offset = uavShow.uav1PositionTextItem->text().length() * 2.5;
+  uavShow.uav1PositionTextItem->setPos(uavPosition_body(0,0)*50 - 10, -uavPosition_body(1,0)*50 - offset);
+  offset = uavShow.uav2PositionTextItem->text().length() * 2.5;
+  uavShow.uav2PositionTextItem->setPos(uavPosition_body(0,1)*50 - 10, -uavPosition_body(1,1)*50 - offset);
+  offset = uavShow.uav3PositionTextItem->text().length() * 2.5;
+  uavShow.uav3PositionTextItem->setPos(uavPosition_body(0,2)*50 - 10, -uavPosition_body(1,2)*50 - offset);
+
+
+//  uavShow.uav1PolygonItem->setPos(uavControl.currentPosition[1].x*50, -uavControl.currentPosition[1].y*50);
+//  uavShow.uav1PolygonItem->setRotation((-uavControl.currentYaw[1] ) * 180 / uavControl.PI + 90);
+//  uavShow.uav2PolygonItem->setPos(uavControl.currentPosition[2].x*50, -uavControl.currentPosition[2].y*50);
+//  uavShow.uav2PolygonItem->setRotation((-uavControl.currentYaw[2]) * 180 / uavControl.PI + 90);
+//  uavShow.uav3PolygonItem->setPos(uavControl.currentPosition[3].x*50, -uavControl.currentPosition[3].y*50);
+//  uavShow.uav3PolygonItem->setRotation((-uavControl.currentYaw[3]) * 180 / uavControl.PI + 90);
+
+//  QString  qstr;
+//  qstr = QString::number(uavControl.currentPosition[1].x,'g',3) + " , " + QString::number(uavControl.currentPosition[1].y,'g',3);
+//  uavShow.uav1PositionTextItem->setText(qstr);
+//  qstr = QString::number(uavControl.currentPosition[2].x,'g',3) + " , " + QString::number(uavControl.currentPosition[2].y,'g',3);
+//  uavShow.uav2PositionTextItem->setText(qstr);
+//  qstr = QString::number(uavControl.currentPosition[3].x,'g',3) + " , " + QString::number(uavControl.currentPosition[3].y,'g',3);
+//  uavShow.uav3PositionTextItem->setText(qstr);
+
+//  uavShow.uav1PositionTextItem->setPos(uavControl.currentPosition[1].x*50 - 10, -uavControl.currentPosition[1].y*50 - 10);
+//  uavShow.uav2PositionTextItem->setPos(uavControl.currentPosition[2].x*50 - 10, -uavControl.currentPosition[2].y*50 - 10);
+//  uavShow.uav3PositionTextItem->setPos(uavControl.currentPosition[3].x*50 - 10, -uavControl.currentPosition[3].y*50 - 10);
+
 }
 
 void MainWindow::displayStitchingImage(const QImage image)
@@ -935,7 +996,41 @@ void MainWindow::deal_mouseRelease_signal(QPoint point)
 
 }
 
+void MainWindow::on_takeoff_pBtn_clicked()
+{
+    if(takeoff_flag == false)
+    {
+      takeoff_flag = true;
+      uav1Node.takeoff();
+      uav2Node.takeoff();
+      uav3Node.takeoff();
+      ui.takeoff_pBtn->setText(QString::fromUtf8("一键降落"));
+    }
+    else
+    {
+      takeoff_flag = false;
+
+      // 关闭自动控制功能
+      uavControl.isAutoFly = false;
+      if(uavControl.isRunning())
+      {
+        uavControl.autoFlyThreadStatue = false;
+        uavControl.quit();
+        uavControl.wait();
+        ui.autoFly_pBtn->setText(QString::fromUtf8("自主飞行"));
+      }
+
+      uav1Node.land();
+      uav2Node.land();
+      uav3Node.land();
+      ui.takeoff_pBtn->setText(QString::fromUtf8("一键起飞"));
+
+    }
+}
+
 }  // namespace image_stitching
+
+
 
 
 

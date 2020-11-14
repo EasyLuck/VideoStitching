@@ -16,6 +16,8 @@
 #include <QWaitCondition>
 #include <QTime>
 
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 
 //#include "uav.hpp"
 
@@ -81,11 +83,11 @@ public:
   geometry_msgs::Point lastPosition[4];
 
   double currentYaw[4];
-  double yawOffset[4];  // 与正北方向的偏差
+  double yawOffset[4];              // 与正北方向的偏差
   double yawOffset_21,yawOffset_23;
-  double y_Offset_21,y_Offset_23; //  当前位置偏差
+  double y_Offset_21,y_Offset_23;   //当前位置偏差
   double y_Offset_21_init, y_Offset_23_init;  //  初始位置偏差，用于计算global坐标系
-  bool setYawOffset_ok; //标记是否已经校准yaw
+  bool setYawOffset_ok;             //标记是否已经校准yaw
   double delatT;
   geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
 
@@ -94,7 +96,7 @@ public:
 
   // 根据图像进行调整
   double targetOverlap_left,targetOverlap_right;
-  double currentOverlap_left,currentOverlap_right;
+  double currentOverlap_left[11],currentOverlap_right[11];
   double overlap_upper,overlap_lower;
   bool flayState_left[2],flayState_right[2];
   bool uav3flayState_left[2],uav3flayState_right[2];
@@ -103,13 +105,14 @@ public:
   bool is_imageControl[4];  //  是否正在根据拼接效果调整
 
 
+
   void run();
 //  void gps_xyz(double lat2, double lon2, double *x_east, double *y_north, double start_point_lat_rad, double start_point_lon_rad);
   void uav_LRcontrol();
   void uav_FBcontrol();
 
   void limiter(double *input, double max, double min);
-
+  void filter(double left, double right);
 public Q_SLOTS:
   void deal_overlapRateSignal(double overlapRate_left,double overlapRate_right);
 //  void deal_uavgpsDataSignal(int UAVx, double latitude, double longitude);

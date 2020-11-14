@@ -5,8 +5,7 @@
 #include <math.h>
 #include "../include/image_stitching/uav_control.hpp"
 #include <QMatrix>
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+
 
 /*****************************************************************************
 ** Namespaces
@@ -26,6 +25,8 @@ uav_control::uav_control(QWidget *parent)
   // 目标重合度
   targetOverlap_left = 70;
   targetOverlap_right = 70;
+  currentOverlap_left[10] = targetOverlap_left;
+  currentOverlap_right[10] = targetOverlap_right;
 
   overlap_upper = 5;
   overlap_lower = -5;
@@ -88,7 +89,7 @@ void uav_control::run()
       // 发送控制信号 （接受者在main_window.cpp)
       uav_FBcontrol();
 
-      // 控制左右
+//       控制左右
       if(isStitching)
         uav_LRcontrol();
 
@@ -107,8 +108,24 @@ void uav_control::run()
 
 void uav_control::deal_overlapRateSignal(double overlapRate_left,double overlapRate_right)
 {
-  this->currentOverlap_left = overlapRate_left;
-  this->currentOverlap_right = overlapRate_right;
+  this->currentOverlap_left[10] = overlapRate_left;
+  this->currentOverlap_right[10] = overlapRate_right;
+}
+void uav_control::filter(double left, double right)
+{
+  double sum_left =0,sum_right =0;
+  currentOverlap_left[9] = left;
+  currentOverlap_right[9] = right;
+  sum_left =currentOverlap_left[0];
+  for(int i=0;i<8;i++)
+  {
+    currentOverlap_left[i] = currentOverlap_left[i+1];
+    sum_left = sum_left + currentOverlap_left[i];
+    currentOverlap_right[i] = currentOverlap_right[i+1];
+    sum_right = sum_right + currentOverlap_right[i];
+  }
+  currentOverlap_left[10] = sum_left / 10.0;
+  currentOverlap_right[10] = sum_right / 10.0;
 }
 void uav_control::deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdom)
 {
@@ -274,22 +291,22 @@ void uav_control::limiter(double *input, double max, double min)
 }
 void uav_control::uav_LRcontrol()
 {
-  if(currentOverlap_left > targetOverlap_left + overlap_upper)
+  if(currentOverlap_left[10] > targetOverlap_left + overlap_upper)
   {
     // 左飞
 //    flayState_left[0] = true;
 //    flayState_right[0] = false;
     is_imageControl[1] = true;  //  无人机1正在根据图像调整
-    uav1TargetVelocity.linear.y = 0.2;
+    uav1TargetVelocity.linear.y = 0.1;
 
   }
-  else if(currentOverlap_left < targetOverlap_left + overlap_lower)
+  else if(currentOverlap_left[10] < targetOverlap_left + overlap_lower)
   {
     // 右飞
 //    flayState_right[0] = true;
 //    flayState_left[0] = false;
     is_imageControl[1] = true;  //  无人机1正在根据图像调整
-    uav1TargetVelocity.linear.y = -0.2;
+    uav1TargetVelocity.linear.y = -0.1;
   }
   else
   {
@@ -309,21 +326,21 @@ void uav_control::uav_LRcontrol()
 //  flayState_right[1] = flayState_right[0];
 
   // ****************uav3****************
-  if(currentOverlap_right > targetOverlap_right + overlap_upper)
+  if(currentOverlap_right[10] > targetOverlap_right + overlap_upper)
   {
     // 右飞
 //    uav3flayState_left[0] = false;
 //    uav3flayState_right[0] = true;
     is_imageControl[3] = true;  //  无人机3正在根据图像调整
-    uav3TargetVelocity.linear.y = -0.2;
+    uav3TargetVelocity.linear.y = -0.1;
   }
-  else if(currentOverlap_right < targetOverlap_right + overlap_lower)
+  else if(currentOverlap_right[10] < targetOverlap_right + overlap_lower)
   {
     // 左飞
 //    uav3flayState_right[0] = false;
 //    uav3flayState_left[0] = true;
     is_imageControl[3] = true;  //  无人机3正在根据图像调整
-    uav3TargetVelocity.linear.y = 0.2;
+    uav3TargetVelocity.linear.y = 0.1;
   }
   else
   {

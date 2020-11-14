@@ -28,6 +28,7 @@
 #include "kcf/trackerThread.hpp"
 #include "stitching.hpp"
 #include "uav_control.hpp"
+#include "uavpositionshow.hpp"
 
 namespace image_stitching {
 
@@ -53,6 +54,7 @@ public:
   stitching imageStitching;
   uav_control uavControl;
   tracker_thread trackerThread;
+  uavPositionshow  uavShow;
 
   QTimer *MyTimer;
 
@@ -69,6 +71,8 @@ public:
   QGraphicsRectItem *RectItem;   //多边形
   QRectF rect; //（x，y）为左上角并具有给定width和height的矩形
 
+  // 一键起飞、降落标志位
+  bool takeoff_flag;
   /*用来保护一个对象、数据结构、代码段、使得它们在同一一时刻，只有一个线程有访问权限*/
   mutable QMutex uav1Image_mutex_;
   mutable QMutex uav2Image_mutex_;
@@ -155,12 +159,13 @@ public Q_SLOTS:
   void on_track_pBtn_clicked();
 
   void on_setOverlapRate_pBtn_clicked();
+
+  void on_takeoff_pBtn_clicked();
 private:
 	Ui::MainWindowDesign ui;
 
 protected:
 //  void paintEvent(QPaintEvent *);
-
 
 
 };
