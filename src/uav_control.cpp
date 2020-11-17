@@ -215,14 +215,16 @@ void uav_control::uav_FBcontrol()
     }
     /* *************************** 计算 yaw 控制输出量 *************************** */
     uav1pid.yaw.error = currentYaw[2] - currentYaw[1] - yawOffset_21;
+    cout << " uav1pid.yaw.error   --------------------- " << uav1pid.yaw.error << endl;
+    cout << " uav1pid.yaw.error   --------------------- " << uav1pid.yaw.error*180/PI << endl;
     if(abs(uav1pid.yaw.error) > PI)
     {
       if(uav1pid.yaw.error > 0)
         uav1pid.yaw.error = uav1pid.yaw.error - 2*PI;
-      if(uav1pid.yaw.error < 0)
+      else
         uav1pid.yaw.error = uav1pid.yaw.error + 2*PI;
     }
-
+    cout << " uav1pid.yaw.error   ------------------------------------------ " << uav1pid.yaw.error*180/PI << endl;
     uav1TargetVelocity.angular.z = uav1pid.yaw.kp * uav1pid.yaw.error;
 
     /* *************************** 计算Z轴控制量 *************************** */
@@ -255,7 +257,7 @@ void uav_control::uav_FBcontrol()
     {
       if(uav3pid.yaw.error > 0)
         uav3pid.yaw.error = uav3pid.yaw.error - 2*PI;
-      if(uav3pid.yaw.error < 0)
+      else
         uav3pid.yaw.error = uav3pid.yaw.error + 2*PI;
     }
     uav3TargetVelocity.angular.z = uav3pid.yaw.kp * uav3pid.yaw.error;
@@ -305,7 +307,7 @@ void uav_control::uav_FBcontrol()
 //                                                 << "  " << uav3TargetVelocity.linear.x << "   "<< uav3TargetVelocity.linear.y<< endl;
 
 //  cout << setprecision(6) << "targetPosition : -------------------  " << currentPosition[2].x - y_Offset_21 * sin(currentYaw[2]) << " " << currentPosition[2].y + y_Offset_21 * cos(currentYaw[2]) << endl;
-//  cout << setprecision(6) << "   y_Offset_2x : " << y_Offset_21 << "   "<< y_Offset_23 << endl;
+  cout << setprecision(6) << "   yawOffset_2x : " << yawOffset_21*180/PI << "   "<< yawOffset_23*180/PI << endl;
 
 }
 

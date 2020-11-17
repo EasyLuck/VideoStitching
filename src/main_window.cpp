@@ -917,7 +917,7 @@ void MainWindow::on_setYawErr_pBtn_clicked()
     {
       if(uavControl.yawOffset_21 > 0)
         uavControl.yawOffset_21 = uavControl.yawOffset_21 - 2*uavControl.PI;
-      if(uavControl.yawOffset_21 < 0)
+      else
         uavControl.yawOffset_21 = uavControl.yawOffset_21 + 2*uavControl.PI;
     }
     uavControl.yawOffset_23 = uavControl.yawOffset[2] - uavControl.yawOffset[3];
@@ -925,7 +925,7 @@ void MainWindow::on_setYawErr_pBtn_clicked()
     {
       if(uavControl.yawOffset_23 > 0)
         uavControl.yawOffset_23 = uavControl.yawOffset_23 - 2*uavControl.PI;
-      if(uavControl.yawOffset_23 < 0)
+      else
         uavControl.yawOffset_23 = uavControl.yawOffset_23 + 2*uavControl.PI;
     }
     ui.setYawErr_pBtn->setText(QString::fromUtf8("已设定"));
