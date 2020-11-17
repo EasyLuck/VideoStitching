@@ -19,6 +19,9 @@ stitching::stitching(QWidget *parent)
   isStitching = false;
   stitchingThreadStatue = true;
 
+  stitchingErr_right = false;
+  stitchingErr_left = false;
+
 }
 
 
@@ -52,6 +55,7 @@ void stitching::run()
 
       stitchingImage = stitchingThreeImage(leftImage, middleImage,rightImage);
       Q_EMIT trackStitchingImageSignal(stitchingImage);
+      Q_EMIT overlapRateSignal(overlap_rate_left, overlap_rate_right);
 
       #if svaeLog
       if(ouputFile.is_open())
@@ -254,10 +258,12 @@ cv::Mat stitching::stitchingThreeImage(cv::Mat img1, cv::Mat img2, cv::Mat img3)
             middleImg_corners.right_bottom.x = MAX(middleImg_corners.right_bottom.x, rightImg_corners.right_bottom.x);
             middleImg_corners.right_bottom.y = MAX(middleImg_corners.right_bottom.y, rightImg_corners.right_bottom.y);
             dst.copyTo(middleImageTransform);
+            stitchingErr_right = false;
         }
         else//匹配点不足８个
         {
-            cout << " Insufficient feature points, unable to realize right image stitching " << endl;
+//            cout << " Insufficient feature points, unable to realize right image stitching " << endl;
+            stitchingErr_right = true;
         }
 
         if(good_matches_LM.size()>=8)
@@ -291,10 +297,12 @@ cv::Mat stitching::stitchingThreeImage(cv::Mat img1, cv::Mat img2, cv::Mat img3)
 
             OptimizeSeam(middleImageTransform, leftImageTransform, dst, middleImg_corners, leftImg_corners);
             overlap_rate_left =  (float)((leftImg_corners.right_top.x+leftImg_corners.right_bottom.x)/2.0 - offfset.x) * 100 / (float)img2.cols;
+            stitchingErr_left = false;
         }
         else//匹配点不足８个
         {
-            cout << " Insufficient feature points, unable to realize left image stitching " << endl;
+//            cout << " Insufficient feature points, unable to realize left image stitching " << endl;
+          stitchingErr_left = true;
         }
 //        drawText(dst, overlap_rate_left, Point(offfset.x, offfset.y));
 //        drawText(dst, overlap_rate_right, Point(offfset.x + img2.cols, offfset.y));

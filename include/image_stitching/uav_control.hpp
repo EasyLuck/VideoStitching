@@ -66,7 +66,7 @@ public:
     PID yaw;
   };
 
-  uavPID uav1pid,uav3pid;
+  uavPID uav1pid,uav2pid,uav3pid;
 
    //GPS  0 元素不使用 从1开始
   double a_bit;
@@ -80,7 +80,8 @@ public:
   // odom 控制   uav1 -- 1   uav2 -- 2   uav3 -- 3 (元素为4的数组，0元素不使用)
   geometry_msgs::Point currentPosition[4];
   geometry_msgs::Twist currentVelocity[4];
-  geometry_msgs::Point lastPosition[4];
+//  geometry_msgs::Point lastPosition[4];
+  geometry_msgs::Pose uav2targetPose;
 
   double currentYaw[4];
   double yawOffset[4];              // 与正北方向的偏差
@@ -89,7 +90,7 @@ public:
   double y_Offset_21_init, y_Offset_23_init;  //  初始位置偏差，用于计算global坐标系
   bool setYawOffset_ok;             //标记是否已经校准yaw
   double delatT;
-  geometry_msgs::Twist uav1TargetVelocity,uav3TargetVelocity;
+  geometry_msgs::Twist uav1TargetVelocity,uav2TargetVelocity,uav3TargetVelocity;
 
   // 是否手动调整
   bool is_manualControl[4];
@@ -100,6 +101,7 @@ public:
   double overlap_upper,overlap_lower;
   bool flayState_left[2],flayState_right[2];
   bool uav3flayState_left[2],uav3flayState_right[2];
+  bool stitchingErr_right,stitchingErr_left;
 
   bool isStitching;         //  是否启动图像拼接
   bool is_imageControl[4];  //  是否正在根据拼接效果调整
@@ -128,7 +130,7 @@ Q_SIGNALS://Qt信号
   void turnLeftSignal(int,bool);
   void turnRightSignal(int,bool);
 
-  void uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist);
+  void uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist,geometry_msgs::Twist);
 
 
 private:

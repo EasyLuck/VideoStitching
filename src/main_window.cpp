@@ -128,7 +128,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   QObject::connect(&uavControl,SIGNAL(flayDownSignal(int,bool)),this,SLOT(deal_flayDownSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(turnLeftSignal(int,bool)),this,SLOT(deal_turnLeftSignal(int,bool)));
   QObject::connect(&uavControl,SIGNAL(turnRightSignal(int,bool)),this,SLOT(deal_turnRightSignal(int,bool)));
-  QObject::connect(&uavControl,SIGNAL(uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)),this,SLOT(deal_uavTargetVelocitySignal(geometry_msgs::Twist, geometry_msgs::Twist)));
+  QObject::connect(&uavControl,SIGNAL(uavTargetVelocitySignal(geometry_msgs::Twist,geometry_msgs::Twist, geometry_msgs::Twist)),this,SLOT(deal_uavTargetVelocitySignal(geometry_msgs::Twist,geometry_msgs::Twist, geometry_msgs::Twist)));
   // KCF追踪
 //  QObject::connect(this,SIGNAL(trackerImageSignal(QImage)),this,SLOT(deal_trackerImageSignal(QImage)));
   QObject::connect(ui.graphicsView,SIGNAL(mouseMove_signal(QPoint)), this, SLOT(deal_mouseMove_signal(QPoint)));
@@ -193,6 +193,16 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
     scene->addItem(RectItem);
     ui.graphicsView->setScene(scene);
     ui.graphicsView->show();
+
+    ros::init(argc,argv,"main_node");
+    if ( ! ros::master::check() )
+    {
+      std::string str = "gnome-terminal --window -e 'bash -c \"roscore; exec bash\"'&";
+      const char *command = str.c_str();
+      system(command);
+    }
+
+
 }
 
 MainWindow::~MainWindow() {}
@@ -238,7 +248,9 @@ void MainWindow::showNoMasterMessage() {
 	QMessageBox msgBox;
 	msgBox.setText("Couldn't find the ros master.");
 	msgBox.exec();
-    close();
+
+
+//    close();
 }
 
 void MainWindow::deal_timeout()
@@ -283,7 +295,7 @@ void MainWindow::deal_timeout()
   QString  qstr;
   qstr = QString::number(uavPosition_body(0,0),'g',3) + " , " + QString::number(uavPosition_body(1,0),'g',3);
   uavShow.uav1PositionTextItem->setText(qstr);
-  qstr = QString::number(uavPosition_body(0,1),'g',3) + " , " + QString::number(uavPosition_body(1,1),'g',3);
+  qstr = QString::number(uavControl.currentPosition[2].x,'g',3) + " , " + QString::number(uavControl.currentPosition[2].y,'g',3);
   uavShow.uav2PositionTextItem->setText(qstr);
   qstr = QString::number(uavPosition_body(0,2),'g',3) + " , " + QString::number(uavPosition_body(1,2),'g',3);
   uavShow.uav3PositionTextItem->setText(qstr);
@@ -331,6 +343,9 @@ void MainWindow::displayStitchingImage(const QImage image)
   overlap = QString::number(imageStitching.overlap_rate_right, 'g', 3);
   overlap = overlap + "%";
   ui.overlapRate_right_lineEdit->setText(overlap) ;
+
+  uavControl.stitchingErr_left = imageStitching.stitchingErr_left;
+  uavControl.stitchingErr_right = imageStitching.stitchingErr_right;
 }
 
 void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horizontal)
@@ -344,7 +359,7 @@ void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horiz
 }
 
 // 控制无人机的移动
-void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav3TargetVelocity)
+void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav2TargetVelocity,geometry_msgs::Twist uav3TargetVelocity)
 {
   // UAV1
   if(uavControl.is_manualControl[1] == true)
@@ -354,7 +369,7 @@ void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVel
     if(uav1TargetVelocity.angular.z >= 0.02 || uav1TargetVelocity.angular.z <= -0.02)
       uav1Node.cmd(0, 0, 0, uav1TargetVelocity.angular.z);
     else
-      uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, 0, uav1TargetVelocity.angular.z);
+      uav1Node.cmd(uav1TargetVelocity.linear.x, uav1TargetVelocity.linear.y, uav1TargetVelocity.linear.z, uav1TargetVelocity.angular.z);
   }
   // UAV3
   if(uavControl.is_manualControl[3] == true)
@@ -364,7 +379,15 @@ void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVel
     if(uav3TargetVelocity.angular.z >= 0.02 || uav3TargetVelocity.angular.z <= -0.02)
       uav3Node.cmd(0, 0, 0, uav3TargetVelocity.angular.z);
     else
-      uav3Node.cmd(uav3TargetVelocity.linear.x, uav3TargetVelocity.linear.y, 0, uav3TargetVelocity.angular.z);
+      uav3Node.cmd(uav3TargetVelocity.linear.x, uav3TargetVelocity.linear.y, uav3TargetVelocity.linear.z, uav3TargetVelocity.angular.z);
+  }
+
+  // UAV2
+  if(uavControl.is_manualControl[2] == true)
+     uav2Node.moveControl();
+  else
+  {
+      uav2Node.cmd(uav2TargetVelocity.linear.x, uav2TargetVelocity.linear.y, uav2TargetVelocity.linear.z, 0);
   }
 }
 
@@ -843,12 +866,12 @@ void MainWindow::on_stitching_checkBox_stateChanged(int arg1)
     if(ui.stitching_checkBox->isChecked() == true)
     {
       imageStitching.isStitching = true;
-      uavControl.isStitching = true;
+//      uavControl.isStitching = true;
     }
     else
     {
       imageStitching.isStitching = false;
-      uavControl.isStitching = false;
+//      uavControl.isStitching = false;
     }
 }
 // 自动飞行
@@ -922,6 +945,7 @@ void MainWindow::on_setOverlapRate_pBtn_clicked()
 {
   uavControl.targetOverlap_left = ui.setOverlapRate_left_lineEdit->text().toDouble();
   uavControl.targetOverlap_right = ui.setOverlapRate_right_lineEdit->text().toDouble();
+//  std::cout << "uavControl.targetOverlap_right  " <<  uavControl.targetOverlap_right << std::endl;
 }
 void MainWindow::on_track_pBtn_clicked()
 {
@@ -1028,7 +1052,23 @@ void MainWindow::on_takeoff_pBtn_clicked()
     }
 }
 
+void MainWindow::on_imageControl_checkBox_stateChanged(int arg1)
+{
+  if(ui.imageControl_checkBox->isChecked() == true)
+  {
+//    imageStitching.isStitching = true;
+    uavControl.isStitching = true;
+  }
+  else
+  {
+//    imageStitching.isStitching = false;
+    uavControl.isStitching = false;
+  }
+}
+
 }  // namespace image_stitching
+
+
 
 
 

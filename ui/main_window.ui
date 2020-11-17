@@ -1372,6 +1372,19 @@
      <string>一键起飞</string>
     </property>
    </widget>
+   <widget class="QCheckBox" name="imageControl_checkBox">
+    <property name="geometry">
+     <rect>
+      <x>1030</x>
+      <y>790</y>
+      <width>92</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>图像调整</string>
+    </property>
+   </widget>
    <zorder>groupBox_11</zorder>
    <zorder>groupBox_10</zorder>
    <zorder>groupBox</zorder>
@@ -1386,6 +1399,7 @@
    <zorder>graphicsView</zorder>
    <zorder>groupBox_12</zorder>
    <zorder>takeoff_pBtn</zorder>
+   <zorder>imageControl_checkBox</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">

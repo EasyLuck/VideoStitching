@@ -121,7 +121,7 @@ public Q_SLOTS:
   void deal_turnLeftSignal(int UAVx, bool state);
   void deal_turnRightSignal(int UAVx, bool state);
 
-  void deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity, geometry_msgs::Twist uav3TargetVelocity);
+  void deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVelocity,geometry_msgs::Twist uav2TargetVelocity, geometry_msgs::Twist uav3TargetVelocity);
   void deal_cameraControSignal(int UAVx, double vertical, double horizontal);
 
   void deal_rosShutdown(int UAVx);
@@ -161,6 +161,8 @@ public Q_SLOTS:
   void on_setOverlapRate_pBtn_clicked();
 
   void on_takeoff_pBtn_clicked();
+
+  void on_imageControl_checkBox_stateChanged(int arg1);
 private:
 	Ui::MainWindowDesign ui;
 

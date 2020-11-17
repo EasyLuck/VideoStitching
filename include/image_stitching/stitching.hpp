@@ -65,6 +65,7 @@ public:
 
   double overlap_rate_left, overlap_rate_right;
 
+  bool stitchingErr_left, stitchingErr_right;
 
   //优化两图的连接处，使得拼接自然
   void OptimizeSeam(cv::Mat& sourceImage, cv::Mat& transImage, cv::Mat& dst,four_corners_t source_corners,four_corners_t trans_corners);
