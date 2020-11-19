@@ -45,9 +45,11 @@ public:
   MainWindow(int argc, char** argv, QWidget *parent = 0);
 	~MainWindow();
 
+  // 无人机
   uav1 uav1Node;
   uav2 uav2Node;
   uav3 uav3Node;
+  // 移动无人机的界面
   moveUav moveUav1;
   moveUav moveUav2;
   moveUav moveUav3;
@@ -103,14 +105,7 @@ public Q_SLOTS:
   void deal_uav1RgbimageSignal(cv::Mat rgbimage);
   void deal_uav2RgbimageSignal(cv::Mat rgbimage);
   void deal_uav3RgbimageSignal(cv::Mat rgbimage);
-//  void deal_showStitchingImageSignal(QImage image);
   void deal_trackFinishSignal(bool trackStatue);
-
-
-//  void deal_uav3gpsDataSignal(double latitude, double longitude);
-//  void deal_uav3gpsDataSignal(double latitude, double longitude);
-//  void deal_uav2gpsDataSignal(double latitude, double longitude);
-//  void deal_uav3gpsDataSignal(double latitude, double longitude);
 
   void deal_forwardSignal(int UAVx, bool state);
   void deal_backwardSignal(int UAVx, bool state);
@@ -132,6 +127,7 @@ public Q_SLOTS:
   void deal_mousePress_signal(QPoint point); //鼠标单击
   void deal_mouseRelease_signal(QPoint point);
 
+  // 按钮信号处理函数
   void on_uav1Takeoff_pBtn_clicked();
   void on_uav1Land_pBtn_clicked();
   void on_uav1Connect_pBtn_clicked();
@@ -163,11 +159,12 @@ public Q_SLOTS:
   void on_takeoff_pBtn_clicked();
 
   void on_imageControl_checkBox_stateChanged(int arg1);
+  void on_cameraControl_checkBox_stateChanged(int arg1);
+
 private:
 	Ui::MainWindowDesign ui;
 
 protected:
-//  void paintEvent(QPaintEvent *);
 
 
 };

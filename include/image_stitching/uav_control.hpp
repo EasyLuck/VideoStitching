@@ -104,15 +104,18 @@ public:
   bool stitchingErr_right,stitchingErr_left;
 
   bool isStitching;         //  是否启动图像拼接
-  bool is_imageControl[4];  //  是否正在根据拼接效果调整
+  bool is_imageControl[4];  //  是否正在根据拼接效果调整队形
+  bool is_cameraControl; //  是否正在根据拼接效果调整相机角度
 
+  //调整相机转角
+  double rotationalAngle_left, rotationalAngle_right;
 
 
   void run();
 //  void gps_xyz(double lat2, double lon2, double *x_east, double *y_north, double start_point_lat_rad, double start_point_lon_rad);
   void uav_LRcontrol();
   void uav_FBcontrol();
-
+  void uav_cameraControl();
   void limiter(double *input, double max, double min);
   void filter(double left, double right);
 public Q_SLOTS:

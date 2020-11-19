@@ -1,4 +1,5 @@
 #include "../include/image_stitching/stitching.hpp"
+#include <chrono>
 
 #define nFeatures       2000    //图像金字塔上特征点的数量
 #define nLevels         8       //图像金字塔层数
@@ -52,8 +53,14 @@ void stitching::run()
         leftImageRec_flag = false;
         middleImageRec_flag = false;
         rightImageRec_flag = false;
+//        chrono::steady_clock::time_point t1  = chrono::steady_clock::now();
 
-      stitchingImage = stitchingThreeImage(leftImage, middleImage,rightImage);
+        stitchingImage = stitchingThreeImage(leftImage, middleImage,rightImage);
+
+//        chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
+//        chrono::duration<double> time_used = chrono::duration_cast<chrono::duration<double>>(t2-t1);
+//        cout << "cost time: -------------- " << time_used.count() << "  " << 1.0/time_used.count() << " seconds." << endl;
+
       Q_EMIT trackStitchingImageSignal(stitchingImage);
       Q_EMIT overlapRateSignal(overlap_rate_left, overlap_rate_right);
 
@@ -296,7 +303,7 @@ cv::Mat stitching::stitchingThreeImage(cv::Mat img1, cv::Mat img2, cv::Mat img3)
             leftTransform_ok = true;
 
             OptimizeSeam(middleImageTransform, leftImageTransform, dst, middleImg_corners, leftImg_corners);
-            overlap_rate_left =  (float)((leftImg_corners.right_top.x+leftImg_corners.right_bottom.x)/2.0 - offfset.x) * 100 / (float)img2.cols;
+            overlap_rate_left = ((leftImg_corners.right_top.x+leftImg_corners.right_bottom.x)/2.0 - offfset.x) * 100 / img2.cols;
             stitchingErr_left = false;
         }
         else//匹配点不足８个
@@ -304,8 +311,6 @@ cv::Mat stitching::stitchingThreeImage(cv::Mat img1, cv::Mat img2, cv::Mat img3)
 //            cout << " Insufficient feature points, unable to realize left image stitching " << endl;
           stitchingErr_left = true;
         }
-//        drawText(dst, overlap_rate_left, Point(offfset.x, offfset.y));
-//        drawText(dst, overlap_rate_right, Point(offfset.x + img2.cols, offfset.y));
         return dst;
     }
     catch(...)

@@ -941,7 +941,7 @@
       <x>1030</x>
       <y>440</y>
       <width>231</width>
-      <height>41</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
@@ -1060,10 +1060,10 @@
    <widget class="QLabel" name="school_label">
     <property name="geometry">
      <rect>
-      <x>1170</x>
-      <y>710</y>
-      <width>90</width>
-      <height>90</height>
+      <x>1190</x>
+      <y>690</y>
+      <width>101</width>
+      <height>101</height>
      </rect>
     </property>
     <property name="text">
@@ -1080,7 +1080,7 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>475</y>
+      <y>460</y>
       <width>231</width>
       <height>101</height>
      </rect>
@@ -1219,7 +1219,7 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>700</y>
+      <y>674</y>
       <width>121</width>
       <height>41</height>
      </rect>
@@ -1256,7 +1256,7 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>580</y>
+      <y>560</y>
       <width>231</width>
       <height>111</height>
      </rect>
@@ -1357,7 +1357,7 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>750</y>
+      <y>720</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -1366,6 +1366,8 @@
      <font>
       <family>AR PL UKai CN</family>
       <pointsize>19</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
      </font>
     </property>
     <property name="text">
@@ -1376,16 +1378,74 @@
     <property name="geometry">
      <rect>
       <x>1030</x>
-      <y>790</y>
-      <width>92</width>
+      <y>760</y>
+      <width>141</width>
       <height>23</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>AR PL UKai CN</family>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
     <property name="text">
-     <string>图像调整</string>
+     <string>图像反馈控制</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cameraControl_checkBox">
+    <property name="geometry">
+     <rect>
+      <x>1030</x>
+      <y>785</y>
+      <width>121</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>AR PL UKai CN</family>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>镜头调整</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="stitchingState_left_label">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>812</y>
+      <width>20</width>
+      <height>15</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(186, 189, 182);</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="stitchingState_right_label">
+    <property name="geometry">
+     <rect>
+      <x>980</x>
+      <y>812</y>
+      <width>20</width>
+      <height>15</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(186, 189, 182);</string>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
    <zorder>groupBox_11</zorder>
+   <zorder>school_label</zorder>
    <zorder>groupBox_10</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
@@ -1394,12 +1454,14 @@
    <zorder>label_5</zorder>
    <zorder>groupBox_5</zorder>
    <zorder>autoFly_pBtn</zorder>
-   <zorder>school_label</zorder>
    <zorder>track_pBtn</zorder>
    <zorder>graphicsView</zorder>
    <zorder>groupBox_12</zorder>
    <zorder>takeoff_pBtn</zorder>
    <zorder>imageControl_checkBox</zorder>
+   <zorder>cameraControl_checkBox</zorder>
+   <zorder>stitchingState_left_label</zorder>
+   <zorder>stitchingState_right_label</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">

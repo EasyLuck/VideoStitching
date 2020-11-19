@@ -346,6 +346,18 @@ void MainWindow::displayStitchingImage(const QImage image)
 
   uavControl.stitchingErr_left = imageStitching.stitchingErr_left;
   uavControl.stitchingErr_right = imageStitching.stitchingErr_right;
+
+  //主界面 拼接状态指示
+  if(imageStitching.stitchingErr_left)
+    ui.stitchingState_left_label->setStyleSheet("background: rgb(255,0,0)");
+  else
+    ui.stitchingState_left_label->setStyleSheet("background: rgb(0,255,0)");
+
+  if(imageStitching.stitchingErr_right)
+    ui.stitchingState_right_label->setStyleSheet("background: rgb(255,0,0)");
+  else
+    ui.stitchingState_right_label->setStyleSheet("background: rgb(0,255,0)");
+
 }
 
 void MainWindow::deal_cameraControSignal(int UAVx, double vertical, double horizontal)
@@ -388,6 +400,13 @@ void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVel
   else
   {
       uav2Node.cmd(uav2TargetVelocity.linear.x, uav2TargetVelocity.linear.y, uav2TargetVelocity.linear.z, 0);
+  }
+
+  // 移动相机
+  if(uavControl.is_cameraControl == true)
+  {
+    uav1Node.cameraControl(20,uavControl.rotationalAngle_left);
+    uav3Node.cameraControl(20,uavControl.rotationalAngle_right);
   }
 }
 
@@ -871,7 +890,10 @@ void MainWindow::on_stitching_checkBox_stateChanged(int arg1)
     else
     {
       imageStitching.isStitching = false;
-//      uavControl.isStitching = false;
+      uavControl.isStitching = false;
+      uavControl.is_cameraControl = false;
+      ui.imageControl_checkBox->setCheckState(Unchecked);
+      ui.cameraControl_checkBox->setCheckState(Unchecked);
     }
 }
 // 自动飞行
@@ -886,6 +908,7 @@ void MainWindow::on_autoFly_pBtn_clicked()
     }
     uavControl.isAutoFly = true;
     ui.autoFly_pBtn->setText(QString::fromUtf8("切换手动模式"));
+
     if(uavControl.isFinished())
     {
       uavControl.autoFlyThreadStatue = true;
@@ -1056,29 +1079,44 @@ void MainWindow::on_imageControl_checkBox_stateChanged(int arg1)
 {
   if(ui.imageControl_checkBox->isChecked() == true)
   {
-//    imageStitching.isStitching = true;
-    uavControl.isStitching = true;
+    if(imageStitching.isStitching == true)
+    {
+      uavControl.isStitching = true;        //根据拼接效果调整队形
+      uavControl.is_cameraControl = false;  //根据拼接效果调整相机角度
+      ui.cameraControl_checkBox->setCheckState(Unchecked);
+
+      //恢复相机原始角度
+      uavControl.rotationalAngle_left = -0;
+      uavControl.rotationalAngle_right = 0;
+      uav1Node.cameraControl(20,-0);
+      uav3Node.cameraControl(20,0);
+    }
+    else
+      ui.imageControl_checkBox->setCheckState(Unchecked);
   }
   else
   {
-//    imageStitching.isStitching = false;
     uavControl.isStitching = false;
+  }
+}
+void MainWindow::on_cameraControl_checkBox_stateChanged(int arg1)
+{
+  if(ui.cameraControl_checkBox->isChecked() == true)
+  {
+    if(imageStitching.isStitching == true)
+    {
+      uavControl.is_cameraControl = true;
+      uavControl.isStitching = false;
+      ui.imageControl_checkBox->setCheckState(Unchecked);
+    }
+    else
+      ui.cameraControl_checkBox->setCheckState(Unchecked);
+  }
+  else
+  {
+    uavControl.is_cameraControl = false;
   }
 }
 
 }  // namespace image_stitching
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
