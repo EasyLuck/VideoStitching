@@ -37,9 +37,13 @@ uav_control::uav_control(QWidget *parent)
   flayState_right[0] = false;
   flayState_right[1] = false;
 
-
-
   PI = 3.1415926;
+
+  for (int i=0; i<10;i++)
+  {
+    currentOverlap_left[i] = 90.0;
+    currentOverlap_right[i] = 90.0;
+  }
 
   for (int i=0; i<4; i++)
   {
@@ -51,6 +55,7 @@ uav_control::uav_control(QWidget *parent)
   }
   isStitching = false;
   is_cameraControl = false;
+
 
   y_Offset_21_init = 1.5;
   y_Offset_23_init = -1.5;
@@ -114,24 +119,28 @@ void uav_control::run()
 
 void uav_control::deal_overlapRateSignal(double overlapRate_left,double overlapRate_right)
 {
-  this->currentOverlap_left[10] = overlapRate_left;
-  this->currentOverlap_right[10] = overlapRate_right;
+//  this->currentOverlap_left[10] = overlapRate_left;
+//  this->currentOverlap_right[10] = overlapRate_right;
+  filter(overlapRate_left,overlapRate_right);
+
 }
 void uav_control::filter(double left, double right)
 {
   double sum_left =0,sum_right =0;
+  int cnt = 4;
   currentOverlap_left[9] = left;
   currentOverlap_right[9] = right;
-  sum_left =currentOverlap_left[0];
-  for(int i=0;i<9;i++)
+  sum_left = currentOverlap_left[cnt];
+  sum_right = currentOverlap_right[cnt];
+  for(int i=cnt;i<9;i++)
   {
     currentOverlap_left[i] = currentOverlap_left[i+1];
     sum_left = sum_left + currentOverlap_left[i];
     currentOverlap_right[i] = currentOverlap_right[i+1];
     sum_right = sum_right + currentOverlap_right[i];
   }
-  currentOverlap_left[10] = sum_left / 10.0;
-  currentOverlap_right[10] = sum_right / 10.0;
+  currentOverlap_left[10] = sum_left / (10-cnt);
+  currentOverlap_right[10] = sum_right / (10-cnt);
 }
 
 void uav_control::deal_uavodomDataSignal(int UAVx, nav_msgs::Odometry currentOdom)
@@ -188,26 +197,26 @@ void uav_control::uav_cameraControl()
     if(currentOverlap_left[10] > targetOverlap_left + overlap_upper)
     {
       // 左
-      rotationalAngle_left = rotationalAngle_left - 0.5;
+      rotationalAngle_left = rotationalAngle_left - 0.3;
     }
     else if(currentOverlap_left[10] < targetOverlap_left + overlap_lower)
     {
       // 右
-      rotationalAngle_left = rotationalAngle_left + 0.5;
+      rotationalAngle_left = rotationalAngle_left + 0.3;
     }
     // ****************uav3****************
     if(currentOverlap_right[10] > targetOverlap_right + overlap_upper)
     {
       // 右
       //  无人机3正在根据图像调整镜头角度
-      rotationalAngle_right = rotationalAngle_right+ 0.5;
+      rotationalAngle_right = rotationalAngle_right+ 0.3;
 
     }
     else if(currentOverlap_right[10] < targetOverlap_right + overlap_lower)
     {
       // 左
       //  无人机3正在根据图像调整镜头角度
-      rotationalAngle_right = rotationalAngle_right - 0.5;
+      rotationalAngle_right = rotationalAngle_right - 0.3;
     }
 }
 /*
@@ -357,7 +366,7 @@ void uav_control::uav_LRcontrol()
   {
     // 左飞
     is_imageControl[1] = true;  //  无人机1正在根据图像调整
-    uav1TargetVelocity.linear.y = 0.05;
+    uav1TargetVelocity.linear.y = 0.03;
     uav1TargetVelocity.linear.z = 0;
 
   }
@@ -365,7 +374,7 @@ void uav_control::uav_LRcontrol()
   {
     // 右飞
     is_imageControl[1] = true;  //  无人机1正在根据图像调整
-    uav1TargetVelocity.linear.y = -0.05;
+    uav1TargetVelocity.linear.y = -0.03;
     uav1TargetVelocity.linear.z = 0;
   }
   else
@@ -378,7 +387,7 @@ void uav_control::uav_LRcontrol()
   {
     // 右飞
     is_imageControl[3] = true;  //  无人机3正在根据图像调整
-    uav3TargetVelocity.linear.y = -0.05;
+    uav3TargetVelocity.linear.y = -0.03;
     uav3TargetVelocity.linear.z = 0;
 
   }
@@ -386,7 +395,7 @@ void uav_control::uav_LRcontrol()
   {
     // 左飞
     is_imageControl[3] = true;  //  无人机3正在根据图像调整
-    uav3TargetVelocity.linear.y = 0.05;
+    uav3TargetVelocity.linear.y = 0.03;
     uav3TargetVelocity.linear.z = 0;
   }
   else
@@ -398,13 +407,13 @@ void uav_control::uav_LRcontrol()
   if(stitchingErr_left == true)
   {
     is_imageControl[1] = true;
-    uav1TargetVelocity.linear.y = -0.05;
+    uav1TargetVelocity.linear.y = -0.03;
     uav1TargetVelocity.linear.z = 0;
   }
   if(stitchingErr_right == true)
   {
     is_imageControl[3] = true;
-    uav3TargetVelocity.linear.y = 0.05;
+    uav3TargetVelocity.linear.y = 0.03;
     uav3TargetVelocity.linear.z = 0;
   }
 }

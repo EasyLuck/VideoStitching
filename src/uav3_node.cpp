@@ -63,7 +63,7 @@ void uav3::run()
   ros::Rate loop_rate(20);
 
   ros::Duration(1).sleep();
-  cameraControl(20, 6);
+  cameraControl(20, 0);
 
   while ( ros::ok() )
   {

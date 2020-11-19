@@ -337,10 +337,12 @@ void MainWindow::displayStitchingImage(const QImage image)
   stitchingImage_mutex_.unlock();
 
   //显示重合度
-  QString overlap = QString::number(imageStitching.overlap_rate_left, 'g', 3);
+//  QString overlap = QString::number(imageStitching.overlap_rate_left, 'g', 3);
+  QString overlap = QString::number(uavControl.currentOverlap_left[10] , 'g', 3);
   overlap = overlap + "%";
   ui.overlapRate_left_lineEdit->setText(overlap) ;
-  overlap = QString::number(imageStitching.overlap_rate_right, 'g', 3);
+//  overlap = QString::number(imageStitching.overlap_rate_right, 'g', 3);
+  overlap = QString::number(uavControl.currentOverlap_right[10], 'g', 3);
   overlap = overlap + "%";
   ui.overlapRate_right_lineEdit->setText(overlap) ;
 
@@ -1088,8 +1090,8 @@ void MainWindow::on_imageControl_checkBox_stateChanged(int arg1)
       //恢复相机原始角度
       uavControl.rotationalAngle_left = -0;
       uavControl.rotationalAngle_right = 0;
-      uav1Node.cameraControl(20,-0);
-      uav3Node.cameraControl(20,0);
+      uav1Node.cameraControl(20,-5);
+      uav3Node.cameraControl(20,5);
     }
     else
       ui.imageControl_checkBox->setCheckState(Unchecked);

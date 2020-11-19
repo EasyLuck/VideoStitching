@@ -68,7 +68,7 @@ void uav1::run()
 
   ros::Duration(1).sleep();
 
-  cameraControl(20, -6);
+  cameraControl(20, -0);
 
   while ( ros::ok() )
   {
