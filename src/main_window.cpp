@@ -397,12 +397,12 @@ void MainWindow::deal_uavTargetVelocitySignal(geometry_msgs::Twist uav1TargetVel
   }
 
   // UAV2
-  if(uavControl.is_manualControl[2] == true)
-     uav2Node.moveControl();
-  else
-  {
-      uav2Node.cmd(uav2TargetVelocity.linear.x, uav2TargetVelocity.linear.y, uav2TargetVelocity.linear.z, 0);
-  }
+//  if(uavControl.is_manualControl[2] == true)
+//     uav2Node.moveControl();
+//  else
+//  {
+//      uav2Node.cmd(uav2TargetVelocity.linear.x, uav2TargetVelocity.linear.y, uav2TargetVelocity.linear.z, 0);
+//  }
 
   // 移动相机
   if(uavControl.is_cameraControl == true)

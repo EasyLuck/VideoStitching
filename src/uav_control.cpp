@@ -71,7 +71,7 @@ uav_control::uav_control(QWidget *parent)
 
   uav2targetPose.position.x = 0;
   uav2targetPose.position.y = 0;
-  uav2targetPose.position.z = 1;
+  uav2targetPose.position.z = 1.5;
 
   rotationalAngle_left = -6;
   rotationalAngle_right = 6;
@@ -316,18 +316,18 @@ void uav_control::uav_FBcontrol()
     uav3TargetVelocity.linear.y = uav3pid.y.kp * uavError_body(1,0) + uav3pid.y.kd * (0 - currentVelocity[3].linear.y); //
   }
 
-  if(is_manualControl[2] == false)
-  {
-    /* *************************** 计算Z轴控制量 *************************** */
-    uav2pid.z.error = uav2targetPose.position.z - currentPosition[2].z; // uav2.z - uav3.z
-    uav2TargetVelocity.linear.z = uav2pid.z.kp * uav2pid.z.error;
+//  if(is_manualControl[2] == false)
+//  {
+//    /* *************************** 计算Z轴控制量 *************************** */
+//    uav2pid.z.error = uav2targetPose.position.z - currentPosition[2].z; // uav2.z - uav3.z
+//    uav2TargetVelocity.linear.z = uav2pid.z.kp * uav2pid.z.error;
 
-    /* *************************** 计算X Y轴控制输出量 *************************** */
-    uav2pid.x.error = uav2targetPose.position.x - currentPosition[2].x; // uav2.z - uav3.z
-    uav2TargetVelocity.linear.x = -uav2pid.x.kp * uav2pid.x.error;
-    uav2pid.y.error = uav2targetPose.position.y - currentPosition[2].y; // uav2.z - uav3.z
-    uav2TargetVelocity.linear.y = -uav2pid.y.kp * uav2pid.y.error;
-  }
+//    /* *************************** 计算X Y轴控制输出量 *************************** */
+//    uav2pid.x.error = uav2targetPose.position.x - currentPosition[2].x; // uav2.z - uav3.z
+//    uav2TargetVelocity.linear.x = -uav2pid.x.kp * uav2pid.x.error;
+//    uav2pid.y.error = uav2targetPose.position.y - currentPosition[2].y; // uav2.z - uav3.z
+//    uav2TargetVelocity.linear.y = -uav2pid.y.kp * uav2pid.y.error;
+//  }
 
   // 限制幅值
   limiter(&uav1TargetVelocity.linear.x,0.2,-0.2);
