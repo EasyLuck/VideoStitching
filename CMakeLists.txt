@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
     cv_bridge
     image_transport)
 
-#find_package(OpenCV REQUIRED)
+find_package(OpenCV 3.4.3 REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 # Use this to define what the package will export (e.g. libs, headers).
 # Since the default here is to produce only a binary, we don't worry about
