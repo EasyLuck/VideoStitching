@@ -92,7 +92,8 @@ uav_control::~uav_control() {
 
 void uav_control::run()
 {
-  while (autoFlyThreadStatue) {
+  while (autoFlyThreadStatue)
+  {
     if(isAutoFly)
     {
       autoFly_mutex_.lock();
@@ -111,7 +112,7 @@ void uav_control::run()
     }
     else
     {
-      std::cout << "this is autoFlyThread" << std::endl;
+//      std::cout << "this is autoFlyThread" << std::endl;
       msleep(200);
     }
   }

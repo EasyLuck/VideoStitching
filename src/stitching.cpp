@@ -186,7 +186,6 @@ cv::Mat stitching::stitchingThreeImage(cv::Mat img1, cv::Mat img2, cv::Mat img3)
     Mat imageDesc1, imageDesc2,imageDesc3;
     vector<KeyPoint> keyPoint1, keyPoint2,keyPoint3;
 
-
     image_stitching::ORBextractor ORBextractor =  image_stitching::ORBextractor(nFeatures,myfScaleFactor,nLevels,myfIniThFAST,myfMinThFAST);
     ORBextractor(grayImage1, cv::Mat(), keyPoint1, imageDesc1);
     ORBextractor(grayImage2, cv::Mat(), keyPoint2, imageDesc2);

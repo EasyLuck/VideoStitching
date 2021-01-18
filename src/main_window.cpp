@@ -237,7 +237,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
   trackerThread.wait();
   MyTimer->stop();
 
-  QMainWindow::closeEvent(event);
 }
 
 /*****************************************************************************
